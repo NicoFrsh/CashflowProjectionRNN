@@ -51,7 +51,7 @@ callbacks = [
         # the current checkpoint if and only if
         # the `val_loss` score has improved.
         # The saved model name will include the current epoch.
-        filepath="models/mymodel",
+        filepath="models/mymodel.h5",
         save_weights_only=False,
         save_best_only=True,  # Only save a model if `val_loss` has improved.
         monitor="val_loss",
