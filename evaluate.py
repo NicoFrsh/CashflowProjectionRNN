@@ -1,5 +1,4 @@
 # Evaluate saved model
-from numpy.core.defchararray import endswith
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 import matplotlib.pyplot as plt
@@ -22,7 +21,7 @@ lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 
 model_lstm = model.create_rnn_model(lstm_input_shape)
 
-model_lstm.load_weights('models/mymodel')
+model_lstm.load_weights('models/mymodel.h5')
 
 # # Evaluate network
 score = model_lstm.evaluate(X_test, y_test, verbose=0)

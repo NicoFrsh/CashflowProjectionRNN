@@ -56,7 +56,9 @@ callbacks = [
         save_best_only=True,  # Only save a model if `val_loss` has improved.
         monitor="val_loss",
         verbose=1,
-    )
+    ),
+    keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1,
+    mode='min', min_delta=1e-5, cooldown=0, min_lr=0)
 ]
 
 # Fit network
