@@ -1,6 +1,7 @@
 # Evaluate saved model
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
+import numpy as np
 import matplotlib.pyplot as plt
 
 import config
@@ -19,9 +20,12 @@ X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_dat
 # Input shape = (timesteps, # features)
 lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 
-model_lstm = model.create_rnn_model(lstm_input_shape)
+# Get average of labels (used as initial bias value)
+average_label = np.mean(y_train)
 
-model_lstm.load_weights('models/mymodel.h5')
+model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
+
+model_lstm.load_weights('models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS))
 
 # # Evaluate network
 score = model_lstm.evaluate(X_test, y_test, verbose=0)
@@ -48,9 +52,10 @@ predictions_mean = data_postprocessing.calculate_mean(predictions_inverted, 60)
 observations_mean = data_postprocessing.calculate_mean(y_test_original, 60)
 
 if plot_test_accuracy:
+    x = range(1,60)
     plt.figure(0)
-    plt.plot(predictions_mean, '.', label = 'Predictions')
-    plt.plot(observations_mean, 'x', label = 'Observations')
+    plt.plot(x, predictions_mean, '.', label = 'Predictions')
+    plt.plot(x, observations_mean, 'x', label = 'Observations')
     plt.xlabel('Year')
     plt.ylabel('Value')
     plt.title('Predicted vs. observed {}'.format(config.OUTPUT_VARIABLE))
@@ -73,9 +78,11 @@ if plot_train_accuracy:
     training_predictions_mean = data_postprocessing.calculate_mean(training_predictions_inverted, 60)
     training_observations_mean = data_postprocessing.calculate_mean(training_observations_original, 60)
 
+    x = range(1,60)
+
     plt.figure(1)
-    plt.plot(training_predictions_mean, '.', label = 'Predictions')
-    plt.plot(training_observations_mean, 'x', label = 'Observations')
+    plt.plot(x, training_predictions_mean, '.', label = 'Predictions')
+    plt.plot(x, training_observations_mean, 'x', label = 'Observations')
     plt.xlabel('Year')
     plt.ylabel('Value')
     plt.title('Training: Predicted vs. observed {}'.format(config.OUTPUT_VARIABLE))

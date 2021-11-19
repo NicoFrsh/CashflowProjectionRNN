@@ -27,7 +27,11 @@ lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 print('LSTM input shape:')
 print(lstm_input_shape)
 
-model_lstm = model.create_rnn_model(lstm_input_shape)
+# Get average of labels (used as initial bias value)
+average_label = np.mean(y_train)
+print('average_label = ', average_label)
+
+model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
 
 model_lstm.summary()
 
@@ -42,16 +46,16 @@ callbacks = [
         # "no longer improving" being defined as "no better than 1e-5 less"
         min_delta=1e-5,
         # "no longer improving" being further defined as "for at least 10 epochs"
-        patience=15,
+        patience=20,
         verbose=1,
     ),
     keras.callbacks.ModelCheckpoint(
-        # Path where to save the model
+        # Path where to save the model 
         # The two parameters below mean that we will overwrite
         # the current checkpoint if and only if
         # the `val_loss` score has improved.
         # The saved model name will include the current epoch.
-        filepath="models/mymodel.h5",
+        filepath='models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS),
         save_weights_only=False,
         save_best_only=True,  # Only save a model if `val_loss` has improved.
         monitor="val_loss",
