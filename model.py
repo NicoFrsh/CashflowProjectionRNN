@@ -24,18 +24,18 @@ def create_rnn_model(lstm_input_shape, average_label, lstm_cells = config.LSTM_C
                     lstm_cells,
                     input_shape = lstm_input_shape,
                     return_sequences=True,
-                    dropout=0.1,
-                    recurrent_dropout=0.1
+                    dropout=0.0,
+                    recurrent_dropout=0.0
                 )
             )
         lstm_input_shape = (2, config.LSTM_CELLS)
     # Add final (or only) LSTM layer
     model.add(LSTM(
-            32,
+            config.LSTM_CELLS,
             input_shape = lstm_input_shape,
             return_sequences=False,
-            dropout=0.1,
-            recurrent_dropout=0.1
+            dropout=0.0,
+            recurrent_dropout=0.0
     ))
 
     # Add final dense layer

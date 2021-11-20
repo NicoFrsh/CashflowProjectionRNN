@@ -1,10 +1,9 @@
 # main program
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import shuffle
 from tensorflow import keras
-#import matplotlib.pyplot
+import matplotlib.pyplot as plt
 
 import config
 import data_preprocessing
@@ -66,8 +65,18 @@ callbacks = [
 ]
 
 # Fit network
-history = model_lstm.fit(X_train, y_train, epochs=150, batch_size=config.BATCH_SIZE, validation_split=0.1,
+history = model_lstm.fit(X_train, y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.1,
 verbose=2, callbacks=callbacks, shuffle = True)
 
-# print('History metrics:')
-# print(history.history)
+print('History metrics:')
+print(history.history.keys())
+
+# Plot history of losses
+plt.figure()
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'])
+plt.show()

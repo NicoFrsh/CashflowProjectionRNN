@@ -88,4 +88,18 @@ if plot_train_accuracy:
     plt.title('Training: Predicted vs. observed {}'.format(config.OUTPUT_VARIABLE))
     plt.legend()
 
+    # Plot one specific scenario
+    scenario_number = 0
+
+    predictions_scenario = training_predictions_inverted[scenario_number * 59 : scenario_number * 59 + 59]
+    observations_scenario = training_observations_original[scenario_number * 59 : scenario_number * 59 + 59]
+
+    plt.figure(2)
+    plt.plot(x, predictions_scenario, '.', label = 'Predictions')
+    plt.plot(x, observations_scenario, 'x', label = 'Observations')
+    plt.xlabel('Year')
+    plt.ylabel('Value')
+    plt.title('Training: Scenario {} Predicted vs. observed {}'.format(scenario_number, config.OUTPUT_VARIABLE))
+    plt.legend()
+
 plt.show()
