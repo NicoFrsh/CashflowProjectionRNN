@@ -5,14 +5,14 @@ PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/OutputNetProfit.csv'
 OUTPUT_VARIABLE = 'net profit'
 
-TRAIN_RATIO = 0.8
+TRAIN_RATIO = 0.7
 
 TIMESTEPS = 2
 
-LSTM_CELLS = 64
+LSTM_CELLS = 32
 LSTM_LAYERS = 1
 BATCH_SIZE = 512
-OUTPUT_ACTIVATION = 'sigmoid'
+OUTPUT_ACTIVATION = 'tanh'
 
 EPOCHS = 150
 

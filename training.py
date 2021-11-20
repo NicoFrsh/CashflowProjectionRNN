@@ -4,13 +4,15 @@ import numpy as np
 from sklearn.utils import shuffle
 from tensorflow import keras
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 import config
 import data_preprocessing
 import model
 
-# Read inputs
+shuffled_validation_split = True
 
+# Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
@@ -20,6 +22,10 @@ print(y_train.shape)
 print('Test shapes:')
 print(X_test.shape)
 print(y_test.shape)
+
+# Create validation data 
+if shuffled_validation_split:
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
 
 # Input shape = (timesteps, # features)
 lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
@@ -45,7 +51,7 @@ callbacks = [
         # "no longer improving" being defined as "no better than 1e-5 less"
         min_delta=1e-5,
         # "no longer improving" being further defined as "for at least 10 epochs"
-        patience=20,
+        patience=15,
         verbose=1,
     ),
     keras.callbacks.ModelCheckpoint(
@@ -60,13 +66,13 @@ callbacks = [
         monitor="val_loss",
         verbose=1,
     ),
-    keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1,
+    keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1,
     mode='min', min_delta=1e-5, cooldown=0, min_lr=0)
 ]
 
 # Fit network
-history = model_lstm.fit(X_train, y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.1,
-verbose=2, callbacks=callbacks, shuffle = True)
+history = model_lstm.fit(X_train, y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
+validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
 print('History metrics:')
 print(history.history.keys())

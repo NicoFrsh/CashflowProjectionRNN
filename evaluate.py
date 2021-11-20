@@ -1,5 +1,4 @@
 # Evaluate saved model
-from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 import numpy as np
 import matplotlib.pyplot as plt
