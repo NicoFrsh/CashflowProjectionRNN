@@ -42,7 +42,8 @@ train_ratio = config.TRAIN_RATIO):
     # Remove timestep 60 as the outputs only go to 59
     input = input[input['Zeit'] != 60]
     # Filter parameters
-    input = input.iloc[:, 2:19]
+    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
+    input = input.loc[:, parameters]
 
     input = input.to_numpy()
 

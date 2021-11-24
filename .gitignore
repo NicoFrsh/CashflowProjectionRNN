@@ -3,3 +3,4 @@ __pycache__
 models
 tensorflow-apple-metal.yml
 plots
+data

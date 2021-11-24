@@ -24,6 +24,8 @@ average_label = np.mean(y_train)
 
 model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
 
+model_lstm.summary()
+
 model_lstm.load_weights('models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS))
 
 # # Evaluate network
@@ -55,9 +57,9 @@ if plot_test_accuracy:
     plt.figure(0)
     plt.plot(x, predictions_mean, '.', label = 'Predictions')
     plt.plot(x, observations_mean, 'x', label = 'Observations')
-    plt.xlabel('Year')
-    plt.ylabel('Value')
-    plt.title('Predicted vs. observed {}'.format(config.OUTPUT_VARIABLE))
+    plt.xlabel('year')
+    plt.ylabel(config.OUTPUT_VARIABLE)
+    plt.title('Average of predictions vs. observations')
     plt.legend()
 
 
@@ -82,13 +84,13 @@ if plot_train_accuracy:
     plt.figure(1)
     plt.plot(x, training_predictions_mean, '.', label = 'Predictions')
     plt.plot(x, training_observations_mean, 'x', label = 'Observations')
-    plt.xlabel('Year')
-    plt.ylabel('Value')
-    plt.title('Training: Predicted vs. observed {}'.format(config.OUTPUT_VARIABLE))
+    plt.xlabel('year')
+    plt.ylabel(config.OUTPUT_VARIABLE)
+    plt.title('Training: Average of predictions vs. observations')
     plt.legend()
 
     # Plot one specific scenario
-    scenario_number = 0
+    scenario_number = 3
 
     predictions_scenario = training_predictions_inverted[scenario_number * 59 : scenario_number * 59 + 59]
     observations_scenario = training_observations_original[scenario_number * 59 : scenario_number * 59 + 59]
@@ -96,9 +98,9 @@ if plot_train_accuracy:
     plt.figure(2)
     plt.plot(x, predictions_scenario, '.', label = 'Predictions')
     plt.plot(x, observations_scenario, 'x', label = 'Observations')
-    plt.xlabel('Year')
-    plt.ylabel('Value')
-    plt.title('Training: Scenario {} Predicted vs. observed {}'.format(scenario_number, config.OUTPUT_VARIABLE))
+    plt.xlabel('year')
+    plt.ylabel(config.OUTPUT_VARIABLE)
+    plt.title('Training: Scenario {} Predictions vs. observations'.format(scenario_number))
     plt.legend()
 
 plt.show()
