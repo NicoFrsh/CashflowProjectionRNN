@@ -10,20 +10,14 @@ import config
 import data_preprocessing
 import model
 
-shuffled_validation_split = True
+shuffled_validation_split = False
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-print('Training shapes:')
-print(X_train.shape)
-print(y_train.shape)
-print('Test shapes:')
-print(X_test.shape)
-print(y_test.shape)
-
 # Create validation data 
+# TODO: stratified split! Bisher ist ohne shuffle noch besser!
 X_val, y_val = [], []
 if shuffled_validation_split:
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)

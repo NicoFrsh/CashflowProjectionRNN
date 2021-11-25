@@ -34,7 +34,6 @@ train_ratio = config.TRAIN_RATIO):
     # Convert type of 'Zeit' column
     output['Zeit'] = output['Zeit'].astype('int32')
 
-    # output = pd.melt(output, id_vars=['Simulation', 'variable'])
     output.sort_values(by=['Pfad','Zeit'], inplace=True)
 
     output = output['value'].to_numpy()
@@ -83,8 +82,6 @@ train_ratio = config.TRAIN_RATIO):
             labels.append(output[i])
 
         
-
-
     # Convert to numpy array and reshape
     features, labels = np.array(features), np.array(labels)
 
@@ -93,19 +90,14 @@ train_ratio = config.TRAIN_RATIO):
     print('Shape of labels:')
     print(labels.shape)
 
-    # TODO: So shuffeln, dass die Struktur nicht zerstoert wird
+    # TODO: Stratified shuffle: In Trainings- und Testdaten muessen repraesentativ fuer Datensatz sein.
+    #       D.h. vor allem im Testset sollten 20% (bei train_ratio = 0.8) aller Scenarien zu allen Zeitschritten
+    #       (1-59) enthalten sein.
     if shuffle_data == True:
         features, labels = shuffle(features, labels, random_state=config.RANDOM_SEED)
         
 
     # Split into train and test sets
-    # TODO: Split into train, validation and test sets
-    # train_size = int(len(labels) * train_ratio)
-    # X_train = features[:train_size,:,:]
-    # y_train = labels[:train_size]
-    # X_test = features[train_size:,:,:]
-    # y_test = labels[train_size:]
-
     X_train, y_train, X_test, y_test = train_test_split(features, labels, train_ratio)
 
     return X_train, y_train, X_test, y_test, scaler_output

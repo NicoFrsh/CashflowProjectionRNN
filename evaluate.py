@@ -90,7 +90,7 @@ if plot_train_accuracy:
     plt.legend()
 
     # Plot one specific scenario
-    scenario_number = 3
+    scenario_number = 2
 
     predictions_scenario = training_predictions_inverted[scenario_number * 59 : scenario_number * 59 + 59]
     observations_scenario = training_observations_original[scenario_number * 59 : scenario_number * 59 + 59]
