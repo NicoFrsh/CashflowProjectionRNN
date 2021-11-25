@@ -1,6 +1,10 @@
 # Data postprocessing functions
 import numpy as np
 
+def recursive_prediction(test_data):
+    # TODO: Implementieren
+    return True
+
 # Function to compute the average of the output value (over all scenarios) for all timesteps.
 def calculate_mean(outputs, projection_time):
     

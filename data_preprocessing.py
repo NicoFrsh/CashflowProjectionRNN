@@ -20,23 +20,32 @@ train_ratio = config.TRAIN_RATIO):
     output = pd.read_csv(outputs_path)
 
     # Preprocess data
+    rfb = output[output['Variable'] == 'RfB']
     output = output[output['Variable'] == output_variable]
     output = output.iloc[:, 0:62]
+    rfb = rfb.iloc[:, 0:62]
     # Remove 'Variable' column
     output = output.drop(columns=['Variable'])
+    rfb = rfb.drop(columns=['Variable'])
     # Shift Simulation by -1 to match data from input dataframe.
     output['Simulation'] -= 1
+    rfb['Simulation'] -= 1
     output = output.rename(columns={'Simulation':'Pfad'})
+    rfb = rfb.rename(columns={'Simulation':'Pfad'})
 
     # Change format of dataframe
     output = pd.melt(output, id_vars=['Pfad'], var_name='Zeit')
+    rfb = pd.melt(rfb, id_vars=['Pfad'], var_name='Zeit')
 
     # Convert type of 'Zeit' column
     output['Zeit'] = output['Zeit'].astype('int32')
+    rfb['Zeit'] = rfb['Zeit'].astype('int32')
 
     output.sort_values(by=['Pfad','Zeit'], inplace=True)
+    rfb.sort_values(by=['Pfad','Zeit'], inplace=True)
 
     output = output['value'].to_numpy()
+    rfb = rfb['value'].to_numpy()
 
     # Remove timestep 60 as the outputs only go to 59
     input = input[input['Zeit'] != 60]
@@ -53,6 +62,7 @@ train_ratio = config.TRAIN_RATIO):
 
     input = scaler_input.fit_transform(input)
     output = scaler_output.fit_transform(output.reshape(-1,1))
+    rfb_scaled = scaler_input.fit_transform(rfb.reshape(-1,1))
 
     # Create input data. Take current input parameters along with TIMESTEPS previous input parameters
     # to predict current output.
@@ -67,15 +77,15 @@ train_ratio = config.TRAIN_RATIO):
             continue
         if i % 60 == 1:
             # Add padding at timestep 0
-            features_0 = np.concatenate([input[i-1, :], output[i-1]])
+            features_0 = np.concatenate([input[i-1, :], rfb_scaled[i-1], output[i-1]])
             window_features = np.array([features_0, features_0])
             features.append(window_features)
             labels.append(output[i])
 
         else:
             # TODO: Eleganter loesen!
-            features_1 = np.concatenate([input[i - recurrent_timesteps, :], output[i - recurrent_timesteps]])
-            features_2 = np.concatenate([input[i - 1, :], output[i - 1]])
+            features_1 = np.concatenate([input[i - recurrent_timesteps, :], rfb_scaled[i - recurrent_timesteps], output[i - recurrent_timesteps]])
+            features_2 = np.concatenate([input[i - 1, :], rfb_scaled[i - 1], output[i - 1]])
             window_features = np.array([features_1, features_2])
             features.append(window_features)
             # features.append(input[i - recurrent_timesteps : i, :])
