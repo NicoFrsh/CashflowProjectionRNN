@@ -24,8 +24,23 @@ def calculate_mean(outputs, projection_time):
     mean_outputs = np.array(mean_outputs)
     return mean_outputs
 
-def calculate_test_loss(targets, predictions):
+def calculate_loss(targets, predictions):
     """ 
     Calculates the mean-squared-error of the predictions in relation to the expected target values. 
-    To get a meaningful value, the loss is computed by taking the means 
+    To get a meaningful value, the loss is computed by taking the means ...
     """
+    targets_mean = calculate_mean(targets, 60)
+    predictions_mean = calculate_mean(predictions, 60)
+    number_scenarios = len(targets) / 59
+
+    loss = []
+
+    for i in range(len(targets_mean)):
+
+        mse = (targets_mean[i] - predictions_mean[i])**2 
+        # average over all scenarios
+        mse = mse / number_scenarios
+        loss.append(mse)
+
+    return loss
+

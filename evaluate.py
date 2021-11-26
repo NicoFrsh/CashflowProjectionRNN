@@ -9,8 +9,10 @@ import model
 import data_postprocessing
 
 # Parameters
-plot_test_accuracy = True
-plot_train_accuracy = True
+plot_test_accuracy = False
+plot_train_accuracy = False
+plot_test_loss = True
+plot_train_loss = True
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
@@ -102,5 +104,28 @@ if plot_train_accuracy:
     plt.ylabel(config.OUTPUT_VARIABLE)
     plt.title('Training: Scenario {} Predictions vs. observations'.format(scenario_number))
     plt.legend()
+
+# Calculate test loss
+if plot_test_loss:
+
+    test_loss = data_postprocessing.calculate_loss(y_test, predictions)
+    x = range(1,60)
+
+    plt.figure(3)
+    plt.plot(x, test_loss)
+    plt.xlabel('year')
+    plt.ylabel('loss')
+    plt.title('Test loss over time')
+
+if plot_train_loss:
+    
+    train_loss = data_postprocessing.calculate_loss(y_train, model_lstm.predict(X_train))
+    x = range(1,60)
+
+    plt.figure(4)
+    plt.plot(x, train_loss)
+    plt.xlabel('year')
+    plt.ylabel('loss')
+    plt.title('Train loss over time')
 
 plt.show()
