@@ -9,10 +9,17 @@ import model
 import data_postprocessing
 
 # Parameters
-plot_test_accuracy = True
-plot_train_accuracy = True
-plot_test_loss = True
-plot_train_loss = True
+plot_test_accuracy = False
+plot_train_accuracy = False
+plot_test_mse = False
+plot_train_mse = False
+plot_test_mae = False
+plot_train_mae = False
+plot_test_mse_per_scenario = True
+plot_train_mse_per_scenario = True
+plot_test_mae_per_scenario = True
+plot_train_mae_per_scenario = True
+
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
@@ -36,6 +43,7 @@ print(f'Test loss: {score[0]} / Test mae: {score[1]}')
 
 # Make predictions
 predictions = model_lstm.predict(X_test)
+predictions_train = model_lstm.predict(X_train)
 
 print('Range y_test:')
 print('Min: ', min(y_test), ' Max: ', max(y_test))
@@ -51,8 +59,8 @@ print('Min: ', min(y_test_original), ' Max: ', max(y_test_original))
 print('Range predictions:')
 print('Min: ', min(predictions_inverted), ' Max: ', max(predictions_inverted))
 
-predictions_mean = data_postprocessing.calculate_mean(predictions_inverted, 59)
-observations_mean = data_postprocessing.calculate_mean(y_test_original, 59)
+predictions_mean = data_postprocessing.calculate_mean_per_timestep(predictions_inverted, 59)
+observations_mean = data_postprocessing.calculate_mean_per_timestep(y_test_original, 59)
 
 if plot_test_accuracy:
     x = range(1,60)
@@ -72,7 +80,7 @@ if plot_train_accuracy:
     score = model_lstm.evaluate(X_train, y_train, verbose=0)
     print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
-    training_predictions = model_lstm.predict(X_train)
+    training_predictions = predictions_train
 
     # Revert scaling
     training_predictions_inverted = scaler_output.inverse_transform(training_predictions)
@@ -106,26 +114,86 @@ if plot_train_accuracy:
     plt.legend()
 
 # Calculate test loss
-if plot_test_loss:
+if plot_test_mse:
 
-    test_loss = data_postprocessing.calculate_loss(y_test, predictions)
+    test_loss = data_postprocessing.calculate_loss_per_timestep(y_test, predictions)
     x = range(1,60)
 
     plt.figure(3)
     plt.plot(x, test_loss)
     plt.xlabel('year')
-    plt.ylabel('loss')
-    plt.title('Test loss over time')
+    plt.ylabel('MSE')
+    plt.title('Test MSE over time')
 
-if plot_train_loss:
+if plot_train_mse:
     
-    train_loss = data_postprocessing.calculate_loss(y_train, model_lstm.predict(X_train))
+    train_loss = data_postprocessing.calculate_loss_per_timestep(y_train, predictions_train)
     x = range(1,60)
 
     plt.figure(4)
     plt.plot(x, train_loss)
     plt.xlabel('year')
-    plt.ylabel('loss')
-    plt.title('Train loss over time')
+    plt.ylabel('MSE')
+    plt.title('Train MSE over time')
+
+if plot_test_mae:
+    test_loss = data_postprocessing.calculate_loss_per_timestep(y_test, predictions, loss_metric='mae')
+    x = range(1,60)
+
+    plt.figure(5)
+    plt.plot(x, test_loss)
+    plt.xlabel('year')
+    plt.ylabel('MAE')
+    plt.title('Test MAE over time')
+
+if plot_train_mae:
+    train_loss = data_postprocessing.calculate_loss_per_timestep(y_test, predictions_train, loss_metric='mae')
+    x = range(1,60)
+
+    plt.figure(6)
+    plt.plot(x, train_loss)
+    plt.xlabel('year')
+    plt.ylabel('MAE')
+    plt.title('Train MAE over time')
+
+if plot_test_mse_per_scenario:
+    test_loss = data_postprocessing.calculate_loss_per_scenario(y_test, predictions)
+    x = range(len(test_loss))
+
+    plt.figure(7)
+    plt.plot(x, test_loss)
+    plt.xlabel('Scenario')
+    plt.ylabel('MSE')
+    plt.title('Test MSE over scenarios')
+
+if plot_train_mse_per_scenario:
+    train_loss = data_postprocessing.calculate_loss_per_scenario(y_train, predictions_train)
+    x = range(len(train_loss))
+
+    plt.figure(8)
+    plt.plot(x, train_loss)
+    plt.xlabel('Scenario')
+    plt.ylabel('MSE')
+    plt.title('Train MSE over scenarios')
+
+if plot_test_mae_per_scenario:
+    test_loss = data_postprocessing.calculate_loss_per_scenario(y_test, predictions, loss_metric='mae')
+    x = range(len(test_loss))
+
+    plt.figure(9)
+    plt.plot(x, test_loss)
+    plt.xlabel('Scenario')
+    plt.ylabel('MAE')
+    plt.title('Test MAE over scenarios')
+
+if plot_train_mae_per_scenario:
+    train_loss = data_postprocessing.calculate_loss_per_scenario(y_train, predictions_train, loss_metric='mae')
+    x = range(len(train_loss))
+
+    plt.figure(10)
+    plt.plot(x, train_loss)
+    plt.xlabel('Scenario')
+    plt.ylabel('MAE')
+    plt.title('Train MAE over scenarios')
 
 plt.show()
