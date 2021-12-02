@@ -16,5 +16,5 @@ import data_postprocessing
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-y_test_mean = data_postprocessing.calculate_mean(y_test, 60)
+y_test_mean = data_postprocessing.calculate_mean(y_test, 59)
 

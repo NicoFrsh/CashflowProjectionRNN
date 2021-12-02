@@ -9,8 +9,8 @@ import model
 import data_postprocessing
 
 # Parameters
-plot_test_accuracy = False
-plot_train_accuracy = False
+plot_test_accuracy = True
+plot_train_accuracy = True
 plot_test_loss = True
 plot_train_loss = True
 
@@ -51,8 +51,8 @@ print('Min: ', min(y_test_original), ' Max: ', max(y_test_original))
 print('Range predictions:')
 print('Min: ', min(predictions_inverted), ' Max: ', max(predictions_inverted))
 
-predictions_mean = data_postprocessing.calculate_mean(predictions_inverted, 60)
-observations_mean = data_postprocessing.calculate_mean(y_test_original, 60)
+predictions_mean = data_postprocessing.calculate_mean(predictions_inverted, 59)
+observations_mean = data_postprocessing.calculate_mean(y_test_original, 59)
 
 if plot_test_accuracy:
     x = range(1,60)
@@ -78,8 +78,8 @@ if plot_train_accuracy:
     training_predictions_inverted = scaler_output.inverse_transform(training_predictions)
     training_observations_original = scaler_output.inverse_transform(y_train)
 
-    training_predictions_mean = data_postprocessing.calculate_mean(training_predictions_inverted, 60)
-    training_observations_mean = data_postprocessing.calculate_mean(training_observations_original, 60)
+    training_predictions_mean = data_postprocessing.calculate_mean(training_predictions_inverted, 59)
+    training_observations_mean = data_postprocessing.calculate_mean(training_observations_original, 59)
 
     x = range(1,60)
 

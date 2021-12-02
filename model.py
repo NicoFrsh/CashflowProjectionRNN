@@ -1,7 +1,8 @@
+from keras.engine.base_layer import Layer
 import numpy as np
 import tensorflow as tf
 import keras
-from keras.layers import LSTM, Dense, Dropout, Embedding
+from keras.layers import InputLayer, LSTM, Dense, Dropout, Embedding
 import config
 
 def create_rnn_model(lstm_input_shape, average_label, lstm_cells = config.LSTM_CELLS, lstm_layers = config.LSTM_LAYERS,
