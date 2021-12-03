@@ -8,9 +8,6 @@ import data_preprocessing
 import model
 import data_postprocessing
 
-# Close all open plots
-plt.close('all')
-
 # Parameters
 plot_test_accuracy = False
 plot_train_accuracy = False
@@ -43,6 +40,10 @@ model_lstm.load_weights('models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, c
 # # Evaluate network
 score = model_lstm.evaluate(X_test, y_test, verbose=0)
 print(f'Test loss: {score[0]} / Test mae: {score[1]}')
+
+# Get training accuracy
+score = model_lstm.evaluate(X_train, y_train, verbose=0)
+print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
 # Make predictions
 predictions = model_lstm.predict(X_test)

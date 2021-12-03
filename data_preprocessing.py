@@ -6,7 +6,7 @@ from sklearn.utils import shuffle
 import config
 
 def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timesteps = config.TIMESTEPS, shuffle_data = False,
-train_ratio = config.TRAIN_RATIO):
+include_rfb = False , train_ratio = config.TRAIN_RATIO):
     """
     Prepares data and gets it ready to serve as input to LSTM-Neural-Network.
     Parameters:
@@ -20,7 +20,7 @@ train_ratio = config.TRAIN_RATIO):
     output = pd.read_csv(outputs_path)
 
     # Preprocess data
-    rfb = output[output['Variable'] == 'inflow RfB']
+    rfb = output[output['Variable'] == 'RfB']
     output = output[output['Variable'] == output_variable]
     output = output.iloc[:, 0:62]
     rfb = rfb.iloc[:, 0:62]
@@ -76,18 +76,25 @@ train_ratio = config.TRAIN_RATIO):
             continue
         if i % 60 == 1:
             # Add padding at timestep 0
-            features_0 = np.concatenate([input[i-1, :], rfb_scaled[i-1], output[i-1]])
-            # features_0 = np.concatenate([input[i-1, :], output[i-1]])
+            if include_rfb:
+                features_0 = np.concatenate([input[i-1, :], rfb_scaled[i-1], output[i-1]])
+            else:
+                features_0 = np.concatenate([input[i-1, :], output[i-1]])
+
             window_features = np.array([features_0, features_0])
             features.append(window_features)
             labels.append(output[i])
 
         else:
             # TODO: Eleganter loesen!
-            features_1 = np.concatenate([input[i - recurrent_timesteps, :], rfb_scaled[i - recurrent_timesteps], output[i - recurrent_timesteps]])
-            features_2 = np.concatenate([input[i - 1, :], rfb_scaled[i - 1], output[i - 1]])
-            # features_1 = np.concatenate([input[i - recurrent_timesteps, :], output[i - recurrent_timesteps]])
-            # features_2 = np.concatenate([input[i - 1, :], output[i - 1]])
+            if include_rfb:
+                features_1 = np.concatenate([input[i - recurrent_timesteps, :], rfb_scaled[i - recurrent_timesteps], output[i - recurrent_timesteps]])
+                features_2 = np.concatenate([input[i - 1, :], rfb_scaled[i - 1], output[i - 1]])
+
+            else:
+                features_1 = np.concatenate([input[i - recurrent_timesteps, :], output[i - recurrent_timesteps]])
+                features_2 = np.concatenate([input[i - 1, :], output[i - 1]])
+
             window_features = np.array([features_1, features_2])
             features.append(window_features)
             # features.append(input[i - recurrent_timesteps : i, :])
