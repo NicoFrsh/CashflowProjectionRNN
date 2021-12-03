@@ -8,13 +8,16 @@ import data_preprocessing
 import model
 import data_postprocessing
 
+# Close all open plots
+plt.close('all')
+
 # Parameters
 plot_test_accuracy = False
 plot_train_accuracy = False
-plot_test_mse = False
-plot_train_mse = False
-plot_test_mae = False
-plot_train_mae = False
+plot_test_mse = True
+plot_train_mse = True
+plot_test_mae = True
+plot_train_mae = True
 plot_test_mse_per_scenario = True
 plot_train_mse_per_scenario = True
 plot_test_mae_per_scenario = True
@@ -45,19 +48,19 @@ print(f'Test loss: {score[0]} / Test mae: {score[1]}')
 predictions = model_lstm.predict(X_test)
 predictions_train = model_lstm.predict(X_train)
 
-print('Range y_test:')
-print('Min: ', min(y_test), ' Max: ', max(y_test))
-print('Range predictions:')
-print('Min: ', min(predictions), ' Max: ', max(predictions))
+# print('Range y_test:')
+# print('Min: ', min(y_test), ' Max: ', max(y_test))
+# print('Range predictions:')
+# print('Min: ', min(predictions), ' Max: ', max(predictions))
 
 # Inverse scaling of outputs
 y_test_original = scaler_output.inverse_transform(y_test)
 predictions_inverted = scaler_output.inverse_transform(predictions)
 
-print('Range y_test:')
-print('Min: ', min(y_test_original), ' Max: ', max(y_test_original))
-print('Range predictions:')
-print('Min: ', min(predictions_inverted), ' Max: ', max(predictions_inverted))
+# print('Range y_test:')
+# print('Min: ', min(y_test_original), ' Max: ', max(y_test_original))
+# print('Range predictions:')
+# print('Min: ', min(predictions_inverted), ' Max: ', max(predictions_inverted))
 
 predictions_mean = data_postprocessing.calculate_mean_per_timestep(predictions_inverted, 59)
 observations_mean = data_postprocessing.calculate_mean_per_timestep(y_test_original, 59)
@@ -115,7 +118,6 @@ if plot_train_accuracy:
 
 # Calculate test loss
 if plot_test_mse:
-
     test_loss = data_postprocessing.calculate_loss_per_timestep(y_test, predictions)
     x = range(1,60)
 
@@ -125,8 +127,7 @@ if plot_test_mse:
     plt.ylabel('MSE')
     plt.title('Test MSE over time')
 
-if plot_train_mse:
-    
+if plot_train_mse:    
     train_loss = data_postprocessing.calculate_loss_per_timestep(y_train, predictions_train)
     x = range(1,60)
 
@@ -147,7 +148,7 @@ if plot_test_mae:
     plt.title('Test MAE over time')
 
 if plot_train_mae:
-    train_loss = data_postprocessing.calculate_loss_per_timestep(y_test, predictions_train, loss_metric='mae')
+    train_loss = data_postprocessing.calculate_loss_per_timestep(y_train, predictions_train, loss_metric='mae')
     x = range(1,60)
 
     plt.figure(6)
@@ -157,41 +158,45 @@ if plot_train_mae:
     plt.title('Train MAE over time')
 
 if plot_test_mse_per_scenario:
+    print('Test MSE')
     test_loss = data_postprocessing.calculate_loss_per_scenario(y_test, predictions)
     x = range(len(test_loss))
 
     plt.figure(7)
-    plt.plot(x, test_loss)
+    plt.plot(x, test_loss, '.')
     plt.xlabel('Scenario')
     plt.ylabel('MSE')
     plt.title('Test MSE over scenarios')
 
 if plot_train_mse_per_scenario:
+    print('Train MSE')
     train_loss = data_postprocessing.calculate_loss_per_scenario(y_train, predictions_train)
     x = range(len(train_loss))
 
     plt.figure(8)
-    plt.plot(x, train_loss)
+    plt.plot(x, train_loss, '.')
     plt.xlabel('Scenario')
     plt.ylabel('MSE')
     plt.title('Train MSE over scenarios')
 
 if plot_test_mae_per_scenario:
+    print('Test MAE')
     test_loss = data_postprocessing.calculate_loss_per_scenario(y_test, predictions, loss_metric='mae')
     x = range(len(test_loss))
 
     plt.figure(9)
-    plt.plot(x, test_loss)
+    plt.plot(x, test_loss, '.')
     plt.xlabel('Scenario')
     plt.ylabel('MAE')
     plt.title('Test MAE over scenarios')
 
 if plot_train_mae_per_scenario:
+    print('Train MAE')
     train_loss = data_postprocessing.calculate_loss_per_scenario(y_train, predictions_train, loss_metric='mae')
     x = range(len(train_loss))
 
     plt.figure(10)
-    plt.plot(x, train_loss)
+    plt.plot(x, train_loss, '.')
     plt.xlabel('Scenario')
     plt.ylabel('MAE')
     plt.title('Train MAE over scenarios')
