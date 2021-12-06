@@ -9,15 +9,16 @@ import model
 import data_postprocessing
 
 # Which models do you want to compare?
-model_1_path = 'models/mymodel_1_32_no_stop.h5'
-model_2_path = 'models/mymodel_1_32_rfb_no_stop.h5'
+model_1_path = 'models/mymodel_1_32_without_rfb.h5'
+model_2_path = 'models/mymodel_1_32_shuffle.h5'
 
 # Read inputs
 X_train_1, y_train_1, X_test_1, y_test_1, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-X_train_2, y_train_2, X_test_2, y_test_2, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=True)
+# X_train_2, y_train_2, X_test_2, y_test_2, scaler_output = data_preprocessing.prepare_data(
+#     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=True)
+X_train_2, y_train_2, X_test_2, y_test_2, scaler_output = X_train_1, y_train_1, X_test_1, y_test_1, scaler_output
 
 # Input shape = (timesteps, # features)
 lstm_input_shape_1 = (config.TIMESTEPS, X_train_1.shape[2])
@@ -59,8 +60,8 @@ train_loss_2 = data_postprocessing.calculate_loss_per_timestep(y_train_2, predic
 x = range(1,60)
 
 plt.figure()
-plt.plot(x, train_loss_1, label = 'without rfb')
-plt.plot(x, train_loss_2, label = 'with rfb')
+plt.plot(x, train_loss_1, label = 'without {}'.format(config.ADDITIONAL_INPUT))
+plt.plot(x, train_loss_2, label = 'with {}'.format(config.ADDITIONAL_INPUT))
 plt.legend()
 plt.xlabel('year')
 plt.ylabel('MSE')
@@ -70,8 +71,8 @@ test_loss_1 = data_postprocessing.calculate_loss_per_timestep(y_test_1, predicti
 test_loss_2 = data_postprocessing.calculate_loss_per_timestep(y_test_2, predictions_test_2)
 
 plt.figure()
-plt.plot(x, test_loss_1, label = 'without rfb')
-plt.plot(x, test_loss_2, label = 'with rfb')
+plt.plot(x, test_loss_1, label = 'without {}'.format(config.ADDITIONAL_INPUT))
+plt.plot(x, test_loss_2, label = 'with {}'.format(config.ADDITIONAL_INPUT))
 plt.legend()
 plt.xlabel('year')
 plt.ylabel('MSE')

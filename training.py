@@ -14,7 +14,7 @@ shuffled_validation_split = False
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=True)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=False)
 
 # Create validation data 
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
@@ -40,15 +40,15 @@ model_lstm.summary()
 
 # Create callbacks
 callbacks = [ 
-    # keras.callbacks.EarlyStopping(
-    #     # Stop training when `val_loss` is no longer improving
-    #     monitor="val_loss",
-    #     # "no longer improving" being defined as "no better than 1e-5 less"
-    #     min_delta=1e-5,
-    #     # "no longer improving" being further defined as "for at least 10 epochs"
-    #     patience=15,
-    #     verbose=1,
-    # ),
+    keras.callbacks.EarlyStopping(
+        # Stop training when `val_loss` is no longer improving
+        monitor="val_loss",
+        # "no longer improving" being defined as "no better than 1e-5 less"
+        min_delta=1e-5,
+        # "no longer improving" being further defined as "for at least 10 epochs"
+        patience=15,
+        verbose=1,
+    ),
     keras.callbacks.ModelCheckpoint(
         # Path where to save the model 
         # The two parameters below mean that we will overwrite

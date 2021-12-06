@@ -20,7 +20,7 @@ include_rfb = False , train_ratio = config.TRAIN_RATIO):
     output = pd.read_csv(outputs_path)
 
     # Preprocess data
-    rfb = output[output['Variable'] == 'RfB']
+    rfb = output[output['Variable'] == config.ADDITIONAL_INPUT]
     output = output[output['Variable'] == output_variable]
     output = output.iloc[:, 0:62]
     rfb = rfb.iloc[:, 0:62]
