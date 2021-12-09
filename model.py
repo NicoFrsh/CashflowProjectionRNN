@@ -57,6 +57,3 @@ def create_rnn_model(lstm_input_shape, average_label, lstm_cells = config.LSTM_C
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
     return model
-
-model = create_rnn_model((2,14), 0.5)
-model.summary()

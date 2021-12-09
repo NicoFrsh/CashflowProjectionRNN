@@ -1,10 +1,37 @@
 # Data postprocessing functions
 import numpy as np
 
-def recursive_prediction(test_data):
-    # TODO: Implementieren
-    
-    return True
+def recursive_prediction(X_test, rnn_model):
+
+    # y_hat collects all predictions made by our network
+    y_hat = []
+
+    for i in range(len(X_test)):
+
+        if i % 59 == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
+            # Predict for timestep 1
+            y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,14)))
+
+        elif i % 59 == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
+            feature = X_test[i,:,:] # Keep net profit
+            feature[1,-1] = y_hat[i-1] # Replace net profit with predicted net profit
+            # Predict for timestep 2
+            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,14)))
+        else: # Use previous predictions of net profit as input for both input vectors
+            feature = X_test[i,:,:]
+            # Replace net profits with predicted net profits
+            feature[0,-1] = y_hat[i-2]
+            feature[1,-1] = y_hat[i-1]
+            # Predict for timestep i > 2
+            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,14)))
+
+        y_hat.append(y_hat_i)
+
+    y_hat = np.array(y_hat)
+    y_hat = np.reshape(y_hat, (-1,1))
+
+    return y_hat
+
 
 def calculate_mean_per_timestep(outputs, timesteps):
     """
@@ -58,7 +85,9 @@ def calculate_loss_per_timestep(targets, predictions, timesteps = 59, loss_metri
 
         loss.append(loss_i)
             
-
+    # Check:
+    total_loss = np.mean(loss)
+    print('total_loss (per timestep): ', total_loss)
     loss = np.array(loss)
     return loss
 

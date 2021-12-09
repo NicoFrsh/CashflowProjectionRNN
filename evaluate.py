@@ -9,13 +9,13 @@ import model
 import data_postprocessing
 
 # Parameters
-model_path = 'models/mymodel_1_32.h5'
+model_path = 'models/mymodel_1_32_without_rfb.h5'
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True
 plot_train_mse = True
-plot_test_mae = False
-plot_train_mae = False
+plot_test_mae = True
+plot_train_mae = True
 plot_test_mse_per_scenario = True
 plot_train_mse_per_scenario = True
 plot_test_mae_per_scenario = False
@@ -48,7 +48,9 @@ score = model_lstm.evaluate(X_train, y_train, verbose=0)
 print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
 # Make predictions
-predictions = model_lstm.predict(X_test)
+# predictions = model_lstm.predict(X_test)
+predictions = data_postprocessing.recursive_prediction(X_test, model_lstm)
+print('shape of recursive predictions: ', predictions.shape)
 predictions_train = model_lstm.predict(X_train)
 
 # print('Range y_test:')

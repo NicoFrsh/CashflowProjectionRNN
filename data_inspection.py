@@ -16,5 +16,14 @@ import data_postprocessing
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-y_test_mean = data_postprocessing.calculate_mean_per_timestep(y_test, 59)
+# y_test_mean = data_postprocessing.calculate_mean_per_timestep(y_test, 59)
+
+print('---------------')
+print('Shape X_test: ', X_test.shape)
+X_test_extract = X_test[1,:,:]
+print(X_test_extract)
+print('__________________ reshaping ---------------')
+X_test_extract = np.reshape(X_test_extract, (-1,2,14))
+print('Shape extract: ', X_test_extract.shape)
+print(X_test_extract)
 

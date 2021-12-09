@@ -4,7 +4,7 @@ RANDOM_SEED = 1
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_5000.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/OutputInflowRfB.csv'
 OUTPUT_VARIABLE = 'net profit'
-USE_ADDITIONAL_INPUT = True
+USE_ADDITIONAL_INPUT = False
 ADDITIONAL_INPUT = 'RfB'
 
 TRAIN_RATIO = 0.8
