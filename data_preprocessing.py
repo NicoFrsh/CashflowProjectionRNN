@@ -62,6 +62,7 @@ include_rfb = False , train_ratio = config.TRAIN_RATIO):
 
     input = scaler_input.fit_transform(input)
     rfb_scaled = scaler_input.fit_transform(rfb.reshape(-1,1))
+    # output_input = scaler_input.fit_transform(output.reshape(-1,1))
     output = scaler_output.fit_transform(output.reshape(-1,1))
 
     # Create input data. Take current input parameters along with TIMESTEPS previous input parameters

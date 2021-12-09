@@ -9,21 +9,22 @@ import model
 import data_postprocessing
 
 # Parameters
-plot_test_accuracy = False
-plot_train_accuracy = False
+model_path = 'models/mymodel_1_32.h5'
+plot_test_accuracy = True
+plot_train_accuracy = True
 plot_test_mse = True
 plot_train_mse = True
-plot_test_mae = True
-plot_train_mae = True
+plot_test_mae = False
+plot_train_mae = False
 plot_test_mse_per_scenario = True
 plot_train_mse_per_scenario = True
-plot_test_mae_per_scenario = True
-plot_train_mae_per_scenario = True
+plot_test_mae_per_scenario = False
+plot_train_mae_per_scenario = False
 
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
 
 # Input shape = (timesteps, # features)
 lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
@@ -35,7 +36,8 @@ model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
 
 model_lstm.summary()
 
-model_lstm.load_weights('models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS))
+# model_lstm.load_weights('models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS))
+model_lstm.load_weights(model_path)
 
 # # Evaluate network
 score = model_lstm.evaluate(X_test, y_test, verbose=0)
@@ -90,8 +92,8 @@ if plot_train_accuracy:
     training_predictions_inverted = scaler_output.inverse_transform(training_predictions)
     training_observations_original = scaler_output.inverse_transform(y_train)
 
-    training_predictions_mean = data_postprocessing.calculate_mean(training_predictions_inverted, 59)
-    training_observations_mean = data_postprocessing.calculate_mean(training_observations_original, 59)
+    training_predictions_mean = data_postprocessing.calculate_mean_per_timestep(training_predictions_inverted, 59)
+    training_observations_mean = data_postprocessing.calculate_mean_per_timestep(training_observations_original, 59)
 
     x = range(1,60)
 
@@ -164,10 +166,10 @@ if plot_test_mse_per_scenario:
     x = range(len(test_loss))
 
     plt.figure(7)
-    plt.plot(x, test_loss, '.')
-    plt.xlabel('Scenario')
+    plt.boxplot(test_loss)
+    # plt.xlabel('Scenario')
     plt.ylabel('MSE')
-    plt.title('Test MSE over scenarios')
+    plt.title('Boxplot: Test MSE over scenarios')
 
 if plot_train_mse_per_scenario:
     print('Train MSE')
@@ -175,10 +177,10 @@ if plot_train_mse_per_scenario:
     x = range(len(train_loss))
 
     plt.figure(8)
-    plt.plot(x, train_loss, '.')
-    plt.xlabel('Scenario')
+    plt.boxplot(train_loss)
+    # plt.xlabel('Scenario')
     plt.ylabel('MSE')
-    plt.title('Train MSE over scenarios')
+    plt.title('Boxplot: Train MSE over scenarios')
 
 if plot_test_mae_per_scenario:
     print('Test MAE')

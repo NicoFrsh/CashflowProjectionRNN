@@ -14,7 +14,7 @@ shuffled_validation_split = False
 
 # Read inputs
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=False)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
 
 # Create validation data 
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
@@ -29,7 +29,6 @@ print(lstm_input_shape)
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
-print('average_label = ', average_label)
 
 model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
 

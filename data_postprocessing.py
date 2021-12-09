@@ -50,7 +50,7 @@ def calculate_loss_per_timestep(targets, predictions, timesteps = 59, loss_metri
 
         if (loss_metric == 'mse'):
             # Compute MSE at timestep i
-            loss_i = (np.square(targets_extract - predictions_extract)).mean()
+            loss_i = np.mean((np.square(targets_extract - predictions_extract)))
 
         elif (loss_metric == 'mae'):
             # Compute MAE at timestep i

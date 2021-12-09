@@ -4,6 +4,7 @@ RANDOM_SEED = 1
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_5000.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/OutputInflowRfB.csv'
 OUTPUT_VARIABLE = 'net profit'
+USE_ADDITIONAL_INPUT = True
 ADDITIONAL_INPUT = 'RfB'
 
 TRAIN_RATIO = 0.8
@@ -12,7 +13,7 @@ TIMESTEPS = 2
 
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
-BATCH_SIZE = 1024
+BATCH_SIZE = 256
 OUTPUT_ACTIVATION = 'tanh'
 
 EPOCHS = 150

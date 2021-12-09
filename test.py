@@ -29,6 +29,10 @@ print(labels)
 x = np.tile([1,2,3,4,5],3)
 y = np.array(range(0,15))
 
+z = y - y
+
+print('y-y = ', z)
+
 print('x:')
 print(x)
 print(y)
