@@ -3,39 +3,53 @@ import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
 import config
+import data_preprocessing, data_postprocessing, model
 
-features = np.array([
-    [[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-    [[1,1,1,1],[1,1,1,1],[1,1,1,1]],
-    [[2,2,2,2],[2,2,2,2],[2,2,2,2]],
-    [[3,3,3,3],[3,3,3,3],[3,3,3,3]],
-    [[4,4,4,4],[4,4,4,4],[4,4,4,4]]
-    ])
-labels = np.array([0,1,2,3,4])
+model_path = 'models/mymodel_1_32_without_rfb.h5'
 
-print(features.shape)
-print(labels.shape)
+# Create training and test data
+X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
 
-print('BEFORE SHUFFLE:')
-print(features)
-print(labels)
+# TEST
+y_hat = np.zeros_like(y_test)
+y_hat[1::59,0] = 1
+y_hat[2::59,0] = 2
+feature = X_test[2::59,:,:]
+print('first feature before: ', feature[0,:,:])
+print('second feature before: ', feature[1,:,:])
+feature[:,1,-1] = y_hat[1::59,0]
+feature[:,0,-1] = y_hat[0::59, 0]
+print('first feature after: ', feature[0,:,:])
+print('second feature after: ', feature[1,:,:])
 
-features, labels = shuffle(features, labels, random_state=config.RANDOM_SEED)
 
-print('AFTER SHUFFLE:')
-print(features)
-print(labels)
+# # Input shape = (timesteps, # features)
+# lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 
-x = np.tile([1,2,3,4,5],3)
-y = np.array(range(0,15))
+# rnn_model = model.create_rnn_model(lstm_input_shape, 0.5)
 
-z = y - y
+# rnn_model.load_weights(model_path)
 
-print('y-y = ', z)
+# predictions = data_postprocessing.recursive_prediction(X_test, rnn_model)
+# print('shape of recursive predictions: ', predictions.shape)
 
-print('x:')
-print(x)
-print(y)
 
-window_x = np.concatenate([x[0:2], y[0:2]])
-print(window_x)
+# y_hat = np.empty((1, 59059))
+# print('Shape y_hat: ', y_hat.shape)
+
+# for i in range(59):
+        
+#         if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
+#             y_hat_i = rnn_model.predict(np.reshape(X_test[i::59,:,:], (-1,2,num_features)))
+
+#         elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
+#             feature = X_test[i::59, :, :]
+#             feature[:,1,-1] = y_hat[i-1::59]
+#             y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+#         else:
+#             # implement!
+#             feature = X_test[i::59, :, :]
+
+#         print('shape y_hat_i: ', y_hat_i.shape)
+#         y_hat[i::59] = y_hat_i

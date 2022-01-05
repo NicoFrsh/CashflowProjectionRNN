@@ -26,4 +26,3 @@ print('__________________ reshaping ---------------')
 X_test_extract = np.reshape(X_test_extract, (-1,2,14))
 print('Shape extract: ', X_test_extract.shape)
 print(X_test_extract)
-

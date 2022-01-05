@@ -1,8 +1,14 @@
 # Data postprocessing functions
 import numpy as np
+from numpy.core.fromnumeric import shape
+import config
 
-def recursive_prediction(X_test, rnn_model):
-
+def recursive_prediction(X_test, rnn_model, additional_input = config.USE_ADDITIONAL_INPUT):
+    # TODO: Check difference between two versions!
+    if additional_input:
+        num_features = 15
+    else:
+        num_features = 14
     # y_hat collects all predictions made by our network
     y_hat = []
 
@@ -10,25 +16,51 @@ def recursive_prediction(X_test, rnn_model):
 
         if i % 59 == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
             # Predict for timestep 1
-            y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,14)))
+            y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,num_features)))
 
         elif i % 59 == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
             feature = X_test[i,:,:] # Keep net profit
             feature[1,-1] = y_hat[i-1] # Replace net profit with predicted net profit
             # Predict for timestep 2
-            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,14)))
+            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
         else: # Use previous predictions of net profit as input for both input vectors
             feature = X_test[i,:,:]
             # Replace net profits with predicted net profits
             feature[0,-1] = y_hat[i-2]
             feature[1,-1] = y_hat[i-1]
             # Predict for timestep i > 2
-            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,14)))
+            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
 
         y_hat.append(y_hat_i)
 
     y_hat = np.array(y_hat)
     y_hat = np.reshape(y_hat, (-1,1))
+
+    # if additional_input:
+    #     num_features = 15
+    # else:
+    #     num_features = 14
+
+    # # y_hat collects all predictions made by our network
+    # y_hat = np.empty((X_test.shape[0], 1))
+
+    # for i in range(59):
+        
+    #     if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
+    #         feature = X_test[i::59, :, :]
+    #         y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+
+    #     elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector and predicted net profit from timestep 1
+    #         feature = X_test[i::59, :, :]
+    #         feature[:,1,-1] = y_hat[i-1::59,0]
+    #         y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+    #     else: # Use previous predictions of net profit as input for both input vectors
+    #         feature = X_test[i::59, :, :]
+    #         feature[:,0,-1] = y_hat[i-2::59, 0]
+    #         feature[:,1,-1] = y_hat[i-1::59, 0]
+    #         y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+
+    #     y_hat[i::59] = y_hat_i
 
     return y_hat
 
@@ -148,34 +180,3 @@ def calculate_loss_per_scenario(targets, predictions, timesteps = 59, loss_metri
     total_loss = np.mean(loss)
     print('total_loss (per scenario): ', total_loss)
     return loss
-
-# def calculate_loss_per_scenario(targets, predictions, loss_metric = 'mse'):
-#     """
-#     Calculates the mean-squared-error per scenario over all timesteps. You can choose between Mean-Squared-Error ('mse')
-#     and Mean-Absolute-Error ('mae') as loss metric.
-#     Returns an array of length <number_scenarios> containing the MSE for each scenario.
-#     """
-#     targets_mean = calculate_mean_per_scenario(targets, 59)
-#     predictions_mean = calculate_mean_per_scenario(predictions, 59)
-#     # TODO: Problem: Anzahl Szenarien ist nicht immer 5001!! Training: 5001*0.8 z.b.
-#     number_timesteps = 59
-
-#     loss = []
-
-#     for i in range(len(targets_mean)):
-
-#         if loss_metric == 'mse':
-#             current_loss = (targets_mean[i] - predictions_mean[i])#**2
-#             # current_loss = current_loss / number_timesteps
-
-#         elif loss_metric == 'mae':
-#             current_loss = abs(targets_mean[i] - predictions_mean[i])
-#             # current_loss = current_loss / number_timesteps
-        
-#         loss.append(current_loss)
-
-#     # Check if total loss is same as the score returned by evaluate function
-#     total_loss = np.sum(np.array(loss))
-#     print('total loss (per scenario), {}: '.format(loss_metric), total_loss)
-
-#     return loss

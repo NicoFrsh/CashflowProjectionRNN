@@ -22,7 +22,7 @@ plot_test_mae_per_scenario = False
 plot_train_mae_per_scenario = False
 
 
-# Read inputs
+# Create training and test data
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
 
@@ -49,7 +49,7 @@ print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
 # Make predictions
 # predictions = model_lstm.predict(X_test)
-predictions = data_postprocessing.recursive_prediction(X_test, model_lstm)
+predictions = data_postprocessing.recursive_prediction(X_test, model_lstm, additional_input=config.USE_ADDITIONAL_INPUT)
 print('shape of recursive predictions: ', predictions.shape)
 predictions_train = model_lstm.predict(X_train)
 
