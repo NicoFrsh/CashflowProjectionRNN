@@ -9,19 +9,25 @@ model_path = 'models/mymodel_1_32_without_rfb.h5'
 
 # Create training and test data
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
+print('X_test.shape[0]: ', X_test.shape[0])
+print('y_test shape: ', y_test.shape)
+
+net_profit_original = scaler_output.inverse_transform(y_train[:,0])
+# additional_input_original = scaler_input.inverse_transform(y_train[:,1])
+# print('y_train head: ', net_profit_original[:10,:], additional_input_original[:10,:])
 # TEST
-y_hat = np.zeros_like(y_test)
-y_hat[1::59,0] = 1
-y_hat[2::59,0] = 2
-feature = X_test[2::59,:,:]
-print('first feature before: ', feature[0,:,:])
-print('second feature before: ', feature[1,:,:])
-feature[:,1,-1] = y_hat[1::59,0]
-feature[:,0,-1] = y_hat[0::59, 0]
-print('first feature after: ', feature[0,:,:])
-print('second feature after: ', feature[1,:,:])
+# y_hat = np.zeros_like(y_test)
+# y_hat[1::59,0] = 1
+# y_hat[2::59,0] = 2
+# feature = X_test[2::59,:,:]
+# print('first feature before: ', feature[0,:,:])
+# print('second feature before: ', feature[1,:,:])
+# feature[:,1,-1] = y_hat[1::59,0]
+# feature[:,0,-1] = y_hat[0::59, 0]
+# print('first feature after: ', feature[0,:,:])
+# print('second feature after: ', feature[1,:,:])
 
 
 # # Input shape = (timesteps, # features)

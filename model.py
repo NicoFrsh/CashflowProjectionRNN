@@ -8,13 +8,22 @@ import config
 def create_rnn_model(lstm_input_shape, average_label, lstm_cells = config.LSTM_CELLS, lstm_layers = config.LSTM_LAYERS,
  embedding_layer = False):
 
-    input = Input(shape=lstm_input_shape)
+   input = Input(shape=lstm_input_shape)
 
-    lstm_layer = LSTM(config.LSTM_CELLS)(input)
+   lstm_layer = LSTM(config.LSTM_CELLS)(input)
 
-    output = Dense(1, activation=config.OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label))(lstm_layer)
+   net_profit_head = Dense(1, activation=config.OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label),
+   name = 'net_profit_head')(lstm_layer)
 
-    model = keras.Model(inputs = input, outputs = output)
+   if config.USE_ADDITIONAL_INPUT: # Additional network head for additional input
+      # TODO: bias_initializer for additional input head!
+      additional_output_head = Dense(1, activation=config.OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label),
+      name = 'additional_input_head')(lstm_layer)
+   
+      model = keras.Model(inputs = input, outputs =[net_profit_head, additional_output_head])
+
+   else:
+      model = keras.Model(inputs = input, outputs = net_profit_head)
 
     # model = keras.Sequential()
 
@@ -54,6 +63,10 @@ def create_rnn_model(lstm_input_shape, average_label, lstm_cells = config.LSTM_C
     #     bias_initializer=keras.initializers.Constant(average_label)
     # ))
 
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+   if config.USE_ADDITIONAL_INPUT:
+      model.compile(optimizer='adam', loss={'net_profit_head':'mse','additional_input_head':'mse'}, 
+      loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
+   else:
+      model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
-    return model
+   return model

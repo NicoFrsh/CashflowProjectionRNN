@@ -13,8 +13,10 @@ import model
 shuffled_validation_split = False
 
 # Read inputs
-X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
+# TODO: y_train soll bei USE_ADDITIONAL_INPUT wie folgt vorliegen: [net_profits, additional_inputs]
+#       das kommt dann so in die model.fit Funktion: model.fit(x = X_train, y = [net_profits, additional_inputs])
+X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
 # Create validation data 
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
@@ -65,7 +67,7 @@ callbacks = [
 ]
 
 # Fit network
-history = model_lstm.fit(X_train, y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
+history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
 validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
 print('History metrics:')

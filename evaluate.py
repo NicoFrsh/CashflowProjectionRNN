@@ -24,7 +24,7 @@ plot_train_mae_per_scenario = False
 
 # Create training and test data
 X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, include_rfb=config.USE_ADDITIONAL_INPUT)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
 # Input shape = (timesteps, # features)
 lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
