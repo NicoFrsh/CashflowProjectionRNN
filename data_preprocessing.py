@@ -128,7 +128,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     # Split into train and test sets
     X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
 
-    return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output
+    return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input
 
 
 def train_test_split(features, labels, additional_labels, train_ratio):

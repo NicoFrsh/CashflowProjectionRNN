@@ -3,7 +3,7 @@ import numpy as np
 from numpy.core.fromnumeric import shape
 import config
 
-def recursive_prediction(X_test, rnn_model, additional_input = config.USE_ADDITIONAL_INPUT):
+def recursive_prediction(X_test, rnn_model):
     # TODO: Check difference between two versions!
     # if additional_input:
     #     num_features = 15
@@ -40,26 +40,31 @@ def recursive_prediction(X_test, rnn_model, additional_input = config.USE_ADDITI
 
     # y_hat collects all predictions made by our network
     y_hat = np.empty((X_test.shape[0], 1))
+    y_2_hat = np.empty_like(y_hat)
 
     for i in range(59):
-        
+        print('i: ', i)
         if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
             feature = X_test[i::59, :, :]
-            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            # print('y_hat_i type: ', type(y_hat_i))
+            # print('shape y_hat_i: ', y_hat_i.shape)
+
 
         elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector and predicted net profit from timestep 1
             feature = X_test[i::59, :, :]
             feature[:,1,-1] = y_hat[i-1::59,0]
-            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
         else: # Use previous predictions of net profit as input for both input vectors
             feature = X_test[i::59, :, :]
             feature[:,0,-1] = y_hat[i-2::59, 0]
             feature[:,1,-1] = y_hat[i-1::59, 0]
-            y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
 
         y_hat[i::59] = y_hat_i
+        y_2_hat[i::59] = y_2_hat_i
 
-    return y_hat
+    return y_hat, y_2_hat
 
 
 def calculate_mean_per_timestep(outputs, timesteps):
