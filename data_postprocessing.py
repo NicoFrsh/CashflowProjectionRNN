@@ -43,7 +43,6 @@ def recursive_prediction(X_test, rnn_model):
     y_2_hat = np.empty_like(y_hat)
 
     for i in range(59):
-        print('i: ', i)
         if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
             feature = X_test[i::59, :, :]
             y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))

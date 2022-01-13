@@ -10,9 +10,11 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     Prepares data and gets it ready to serve as input to LSTM-Neural-Network.
     Parameters:
         - scenario_path: file path for the scenario file containing all parameters that were used to create the output
-        - outputs_path: output created by the CFP-Tool
+        - outputs_path: path to output created by the CFP-Tool
         - output_variable: name of the output that we want to predict with our model
         - recurrent_timesteps: how many previous timesteps are included in the prediction for the current output
+        - shuffle_data: whether the data shall be shuffled before training
+        - train_ratio: ratio of how much of the data is used as training data
     """
 
     input = pd.read_csv(scenario_path, skiprows=6)
@@ -55,6 +57,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     input = input.to_numpy()
 
     # Scale inputs to (0,1)
+    # TODO: Additional input scaled to (0,1) as input but scaled to (-1,1) as output?!
     scaler_input = MinMaxScaler()
     # Scale outputs to (-1,1)
     scaler_output = MinMaxScaler(feature_range = (-1,1))
@@ -92,6 +95,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
 
         else:
             # TODO: Eleganter loesen!
+            # Irgendwie mit [i] for i in ....
             if config.USE_ADDITIONAL_INPUT:
                 features_1 = np.concatenate([input[i - recurrent_timesteps, :], additional_input_scaled[i - recurrent_timesteps], output[i - recurrent_timesteps]])
                 features_2 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 1], output[i - 1]])
@@ -112,11 +116,6 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
         
     # Convert to numpy array and reshape
     features, labels, additional_labels = np.array(features), np.array(labels), np.array(additional_labels)
-
-    print('Shape of features:')
-    print(features.shape)
-    print('Shape of labels:')
-    print(labels.shape)
 
     # TODO: Stratified shuffle: In Trainings- und Testdaten muessen repraesentativ fuer Datensatz sein.
     #       D.h. vor allem im Testset sollten 20% (bei train_ratio = 0.8) aller Scenarien zu allen Zeitschritten

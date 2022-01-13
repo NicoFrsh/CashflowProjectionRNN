@@ -13,8 +13,6 @@ import model
 shuffled_validation_split = False
 
 # Read inputs
-# TODO: y_train soll bei USE_ADDITIONAL_INPUT wie folgt vorliegen: [net_profits, additional_inputs]
-#       das kommt dann so in die model.fit Funktion: model.fit(x = X_train, y = [net_profits, additional_inputs])
 X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
@@ -31,8 +29,9 @@ print(lstm_input_shape)
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
+average_label_2 = np.mean(y_2_train)
 
-model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
+model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
 
 model_lstm.summary()
 

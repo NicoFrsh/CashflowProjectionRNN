@@ -32,8 +32,9 @@ lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
+average_label_2 = np.mean(y_2_train)
 
-model_lstm = model.create_rnn_model(lstm_input_shape, average_label)
+model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
 
 model_lstm.summary()
 
@@ -78,8 +79,8 @@ observations_additional_input_mean = data_postprocessing.calculate_mean_per_time
 if plot_test_accuracy:
     x = range(1,60)
     plt.figure(0)
-    plt.plot(x, predictions_additional_input_mean, '.', label = 'Predictions')
-    plt.plot(x, observations_additional_input_mean, 'x', label = 'Observations')
+    plt.plot(x, predictions_np_mean, '.', label = 'Predictions')
+    plt.plot(x, observations_np_mean, 'x', label = 'Observations')
     plt.xlabel('year')
     plt.ylabel(config.OUTPUT_VARIABLE)
     plt.title('Average of predictions vs. observations')
