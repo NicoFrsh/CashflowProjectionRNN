@@ -12,24 +12,29 @@ import model
 
 shuffled_validation_split = False
 
-# Read inputs
-X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output = data_preprocessing.prepare_data(
+# Create training and test data
+if config.USE_ADDITIONAL_INPUT:
+    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+else:
+    X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
 # Create validation data 
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
+# TODO: x_2_val und y_2_val fuer additional input
 X_val, y_val = [], []
 if shuffled_validation_split:
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
 
 # Input shape = (timesteps, # features)
 lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
-print('LSTM input shape:')
-print(lstm_input_shape)
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
-average_label_2 = np.mean(y_2_train)
+average_label_2 = None
+if config.USE_ADDITIONAL_INPUT:
+    average_label_2 = np.mean(y_2_train)
 
 model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
 
@@ -38,7 +43,13 @@ model_lstm.summary()
 # TODO: Install graphviz via brew
 # keras.utils.plot_model(model_lstm, 'lstm_model.png', show_shapes = True)
 
-# Create callbacks
+## Create callbacks
+# Generate descriptive filename for model 
+model_name = 'models/model_'
+if config.USE_ADDITIONAL_INPUT:
+    model_name += '{0}_'.format(config.ADDITIONAL_INPUT)
+model_name += '{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
+
 callbacks = [ 
     keras.callbacks.EarlyStopping(
         # Stop training when `val_loss` is no longer improving
@@ -55,7 +66,7 @@ callbacks = [
         # the current checkpoint if and only if
         # the `val_loss` score has improved.
         # The saved model name will include the current epoch.
-        filepath='models/mymodel_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS),
+        filepath=model_name,
         save_weights_only=False,
         save_best_only=True,  # Only save a model if `val_loss` has improved.
         monitor="val_loss",
@@ -66,8 +77,13 @@ callbacks = [
 ]
 
 # Fit network
-history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
-validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
+if config.USE_ADDITIONAL_INPUT:
+    history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
+    validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
+
+else:
+    history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
+    validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
 print('History metrics:')
 print(history.history.keys())

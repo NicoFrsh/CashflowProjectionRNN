@@ -125,9 +125,15 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
         
 
     # Split into train and test sets
-    X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
+    if config.USE_ADDITIONAL_INPUT:
+        X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
+        
+        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input
 
-    return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input
+    else:
+        X_train, y_train, X_test, y_test = train_test_split(features, labels, additional_labels, train_ratio)
+
+        return X_train, y_train, X_test, y_test, scaler_output, scaler_input
 
 
 def train_test_split(features, labels, additional_labels, train_ratio):
@@ -144,9 +150,14 @@ def train_test_split(features, labels, additional_labels, train_ratio):
 
     X_train = features[:idx_train_end,:,:]
     y_train = labels[:idx_train_end,:]
-    y_2_train = additional_labels[:idx_train_end,:]
     X_test = features[idx_train_end:,:,:]
     y_test = labels[idx_train_end:,:]
-    y_2_test = additional_labels[idx_train_end:,:]
 
-    return X_train, y_train, y_2_train, X_test, y_test, y_2_test
+    if config.USE_ADDITIONAL_INPUT:
+        y_2_train = additional_labels[:idx_train_end,:]
+        y_2_test = additional_labels[idx_train_end:,:]
+
+        return X_train, y_train, y_2_train, X_test, y_test, y_2_test
+
+    else:
+        return X_train, y_train, X_test, y_test
