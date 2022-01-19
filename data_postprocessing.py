@@ -1,73 +1,94 @@
 # Data postprocessing functions
+from distutils.file_util import copy_file
 import numpy as np
 from numpy.core.fromnumeric import shape
 import config
 
+# TODO: Check difference between two versions!
+def recursive_prediction_old(X_test, rnn_model):
+    if config.USE_ADDITIONAL_INPUT:
+        num_features = 15
+    else:
+        num_features = 14
+    # y_hat collects all predictions made by our network
+    y_hat = []
+
+    for i in range(100):
+
+        if i % 59 == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
+            # Predict for timestep 1
+            # y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,num_features)))
+            y_hat_i = rnn_model(np.reshape(X_test[i,:,:], (-1,2,num_features)))
+
+        elif i % 59 == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
+            feature = X_test[i,:,:] # Keep net profit
+            feature[1,-1] = y_hat[i-1] # Replace net profit with predicted net profit
+            print('FEATURE (t=2):')
+            print(feature)
+            feature = np.reshape(feature, (-1,2,num_features))
+            print('Feature shape: ', feature.shape)
+            # Predict for timestep 2
+            # y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            y_hat_i = rnn_model(feature)
+            print('y_hat_i: ', y_hat_i)
+        else: # Use previous predictions of net profit as input for both input vectors
+            feature = X_test[i,:,:]
+            # Replace net profits with predicted net profits
+            feature[0,-1] = y_hat[i-2]
+            feature[1,-1] = y_hat[i-1]
+            # Predict for timestep i > 2
+            # y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            y_hat_i = rnn_model(np.reshape(feature, (-1,2,num_features)))
+
+
+        y_hat.append(y_hat_i)
+
+    y_hat = np.array(y_hat)
+    y_hat = np.reshape(y_hat, (-1,1))
+
+    return y_hat
+
+
 def recursive_prediction(X_test, rnn_model):
-    # TODO: Check difference between two versions!
-    # if additional_input:
-    #     num_features = 15
-    # else:
-    #     num_features = 14
-    # # y_hat collects all predictions made by our network
-    # y_hat = []
-
-    # for i in range(len(X_test)):
-
-    #     if i % 59 == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
-    #         # Predict for timestep 1
-    #         y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,num_features)))
-
-    #     elif i % 59 == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
-    #         feature = X_test[i,:,:] # Keep net profit
-    #         feature[1,-1] = y_hat[i-1] # Replace net profit with predicted net profit
-    #         # Predict for timestep 2
-    #         y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
-    #     else: # Use previous predictions of net profit as input for both input vectors
-    #         feature = X_test[i,:,:]
-    #         # Replace net profits with predicted net profits
-    #         feature[0,-1] = y_hat[i-2]
-    #         feature[1,-1] = y_hat[i-1]
-    #         # Predict for timestep i > 2
-    #         y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
-
-    #     y_hat.append(y_hat_i)
-
-    # y_hat = np.array(y_hat)
-    # y_hat = np.reshape(y_hat, (-1,1))
 
     num_features = X_test.shape[2]
 
     # y_hat collects all predictions made by our network
     y_hat = np.empty((X_test.shape[0], 1))
-    y_2_hat = np.empty_like(y_hat)
+    y_2_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
 
     for i in range(59):
         if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
-            feature = X_test[i::59, :, :]
-            if config.USE_ADDITIONAL_INPUT:
-                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+            feature = X_test[i::59, :, :] # Take actual ADDITIONAL_INPUT from timestep 0 for both input vectors (padding!)
+            if config.USE_ADDITIONAL_INPUT: 
+                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
             else:
-                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
             # print('y_hat_i type: ', type(y_hat_i))
             # print('shape y_hat_i: ', y_hat_i.shape)
 
 
         elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector and predicted net profit from timestep 1
             feature = X_test[i::59, :, :]
-            feature[:,1,-1] = y_hat[i-1::59,0]
+            # feature[:,1,-1] = y_hat[i-1::59,0] 
+            feature[:,1,-1] = y_2_hat[i-1::59,0] # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted net profit from timestep 1
+            print('FEATURE (t=2): ', feature.shape)
+            print(feature[0])
             if config.USE_ADDITIONAL_INPUT:
-                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+                y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
             else:
-                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
-        else: # Use previous predictions of net profit as input for both input vectors
+                y_hat_i = rnn_model.predict(feature, batch_size = 1)
+            print('y_hat_i: ', y_hat_i[:5])
+        else: # (t > 2): Use previous predictions of net profit as input for both input vectors
             feature = X_test[i::59, :, :]
-            feature[:,0,-1] = y_hat[i-2::59, 0]
-            feature[:,1,-1] = y_hat[i-1::59, 0]
+            # feature[:,0,-1] = y_hat[i-2::59, 0]
+            # feature[:,1,-1] = y_hat[i-1::59, 0]
+            feature[:,0,-1] = y_2_hat[i-2::59, 0] # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
+            feature[:,1,-1] = y_2_hat[i-1::59, 0]
             if config.USE_ADDITIONAL_INPUT:
-                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+                y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
             else:
-                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
+                y_hat_i = rnn_model.predict(feature, batch_size = 1)
 
         y_hat[i::59] = y_hat_i
         if config.USE_ADDITIONAL_INPUT:

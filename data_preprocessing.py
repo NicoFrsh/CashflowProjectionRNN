@@ -76,40 +76,42 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     for i in range(1, len(output)):
 
         # Predictions can only be made starting at timestep 1
-        if i % 60 == 0:
+        if i % 60 == 0: # t = 0
             continue
-        if i % 60 == 1:
+        if i % 60 == 1: # t = 1
             # Add padding at timestep 0
             if config.USE_ADDITIONAL_INPUT:
-                features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1], output[i-1]])
-            else:
-                features_0 = np.concatenate([input[i-1, :], output[i-1]])
+                # features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1], output[i-1]])
+                features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1]])# , output[i-1]])
+                features_1 = np.concatenate([input[i, :], additional_input_scaled[i-1]])# , output[i - 1]])
+                window_features = np.array([features_0, features_1])
 
-            window_features = np.array([features_0, features_0])
-            features.append(window_features)
-
-            if config.USE_ADDITIONAL_INPUT:
+                features.append(window_features)
                 additional_labels.append(additional_input_scaled[i])
+
+            else:
+                # features_0 = np.array([input[i-1, :]])#, output[i-1]])
+                # features_1 = np.array([input[i]])#, output[i-1]])
+                features.append(input[i-1 : i+1, :])
             
             labels.append(output[i])
 
-        else:
+        else: # t >= 2
             # TODO: Eleganter loesen!
             # Irgendwie mit [i] for i in ....
             if config.USE_ADDITIONAL_INPUT:
-                features_1 = np.concatenate([input[i - recurrent_timesteps, :], additional_input_scaled[i - recurrent_timesteps], output[i - recurrent_timesteps]])
-                features_2 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 1], output[i - 1]])
+                features_1 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 2]])# , output[i - recurrent_timesteps]])
+                features_2 = np.concatenate([input[i, :], additional_input_scaled[i - 1]])# , output[i - 1]])
+                window_features = np.array([features_1, features_2])
+
+                features.append(window_features)
+                additional_labels.append(additional_input_scaled[i])
 
             else:
-                features_1 = np.concatenate([input[i - recurrent_timesteps, :], output[i - recurrent_timesteps]])
-                features_2 = np.concatenate([input[i - 1, :], output[i - 1]])
+                # features_1 = np.array([input[i - 1, :]])#, output[i - recurrent_timesteps]])
+                # features_2 = np.array([input[i, :]])#, output[i - 1]]) # DROP net profit AS INPUT, AS IT IS HANDLED IN THE HIDDEN STATE OF THE NETWORK
 
-            window_features = np.array([features_1, features_2])
-            features.append(window_features)
-            # features.append(input[i - recurrent_timesteps : i, :])
-
-            if config.USE_ADDITIONAL_INPUT:
-                additional_labels.append(additional_input_scaled[i])
+                features.append(input[i - 1 : i + 1, :])                
             
             labels.append(output[i])
 

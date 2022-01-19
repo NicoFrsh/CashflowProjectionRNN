@@ -5,16 +5,15 @@ from sklearn.utils import shuffle
 import config
 import data_preprocessing, data_postprocessing, model
 
-model_path = 'models/mymodel_1_32_without_rfb.h5'
+model_path = 'models/model_1_32.h5'
 
 # Create training and test data
-X_train, y_train, X_test, y_test, scaler_output = data_preprocessing.prepare_data(
+X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-print('X_test.shape[0]: ', X_test.shape[0])
-print('y_test shape: ', y_test.shape)
 
-net_profit_original = scaler_output.inverse_transform(y_train[:,0])
+net_profit_original = scaler_output.inverse_transform(y_train)
+
 # additional_input_original = scaler_input.inverse_transform(y_train[:,1])
 # print('y_train head: ', net_profit_original[:10,:], additional_input_original[:10,:])
 # TEST
@@ -30,32 +29,39 @@ net_profit_original = scaler_output.inverse_transform(y_train[:,0])
 # print('second feature after: ', feature[1,:,:])
 
 
-# # Input shape = (timesteps, # features)
-# lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
+# Input shape = (timesteps, # features)
+lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
 
-# rnn_model = model.create_rnn_model(lstm_input_shape, 0.5)
+rnn_model = model.create_rnn_model(lstm_input_shape, 0.5)
 
-# rnn_model.load_weights(model_path)
+print(rnn_model.summary())
 
-# predictions = data_postprocessing.recursive_prediction(X_test, rnn_model)
-# print('shape of recursive predictions: ', predictions.shape)
+rnn_model.load_weights(model_path)
 
+print('OLD RECURSIVE_PREDICTION:')
+predictions_old = data_postprocessing.recursive_prediction_old(X_test, rnn_model)
+print('RECURSIVE_PREDICTION:')
+predictions = data_postprocessing.recursive_prediction(X_test, rnn_model)
 
-# y_hat = np.empty((1, 59059))
-# print('Shape y_hat: ', y_hat.shape)
+t0 = predictions[0,0]
+t0_old = predictions_old[0,0]
 
-# for i in range(59):
-        
-#         if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
-#             y_hat_i = rnn_model.predict(np.reshape(X_test[i::59,:,:], (-1,2,num_features)))
+t1 = predictions[1,0]
+t1_old = predictions_old[1,0]
+# t1 = predictions[60,0]
+# t1_old = predictions_old[60,0]
 
-#         elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
-#             feature = X_test[i::59, :, :]
-#             feature[:,1,-1] = y_hat[i-1::59]
-#             y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)))
-#         else:
-#             # implement!
-#             feature = X_test[i::59, :, :]
+print("{:.32f}".format(t0))
+print("{:.32f}".format(t0_old))
 
-#         print('shape y_hat_i: ', y_hat_i.shape)
-#         y_hat[i::59] = y_hat_i
+print("{:.32f}".format(t1))
+print("{:.32f}".format(t1_old))
+
+print(t0 - t0_old)
+print(t1 - t1_old)
+
+print(t0 == t0_old)
+print(t1 == t1_old)
+
+print(type(t0))
+print(type(t0_old))

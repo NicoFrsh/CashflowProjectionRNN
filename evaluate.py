@@ -59,12 +59,13 @@ print(f'Test loss: {score[0]} / Test mae: {score[1]}')
 print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
 # Make predictions
-# predictions = model_lstm.predict(X_test)
+# If an additional input, e.g. RfB, is used the net shall predict the test data using the predicted additional inputs recursively.
 if config.USE_ADDITIONAL_INPUT:
     predictions_np, predictions_additional_input = data_postprocessing.recursive_prediction(X_test, model_lstm)
     predictions_np_train, predictions_additional_input_train = model_lstm.predict(X_train)
 else:
-    predictions_np = data_postprocessing.recursive_prediction(X_test, model_lstm)
+    # predictions_np = data_postprocessing.recursive_prediction(X_test, model_lstm)
+    predictions_np = model_lstm.predict(X_test)
     predictions_np_train = model_lstm.predict(X_train)
 
 # Inverse scaling of outputs
