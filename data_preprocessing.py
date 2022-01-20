@@ -47,6 +47,8 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
 
     output = output['value'].to_numpy()
     additional_input = additional_input['value'].to_numpy()
+    # Duplicate first entry of additional_input for padding reasons (additional_input is shifted by 1 compared to scenario input!)
+    additional_input = np.insert(additional_input, 0, additional_input[0])
 
     # Remove timestep 60 as the outputs only go to 59
     input = input[input['Zeit'] != 60]
@@ -56,14 +58,22 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
 
     input = input.to_numpy()
 
+    # Concatenate inputs and additional inputs
+    if config.USE_ADDITIONAL_INPUT:
+        input = np.concatenate( (input, np.reshape(additional_input[:-1], (-1,1))), axis=1 )
+        print('Shape of inputs_concatenated: ', input.shape)
+        print('Inputs concatenated: ', input[0,:])
+
     # Scale inputs to (0,1)
     # TODO: Additional input scaled to (0,1) as input but scaled to (-1,1) as output?!
     scaler_input = MinMaxScaler()
+    scaler_additional_input = MinMaxScaler()
     # Scale outputs to (-1,1)
     scaler_output = MinMaxScaler(feature_range = (-1,1))
 
-    input = scaler_input.fit_transform(input)
-    additional_input_scaled = scaler_input.fit_transform(additional_input.reshape(-1,1))
+    # TODO: Use same scaler for input and additional_input!
+    input = scaler_input.fit_transform(input,)
+    additional_input_scaled = scaler_additional_input.fit_transform(additional_input.reshape(-1,1))
     # output_input = scaler_input.fit_transform(output.reshape(-1,1))
     output = scaler_output.fit_transform(output.reshape(-1,1))
 
@@ -79,41 +89,49 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
         if i % 60 == 0: # t = 0
             continue
         if i % 60 == 1: # t = 1
-            # Add padding at timestep 0
-            if config.USE_ADDITIONAL_INPUT:
-                # features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1], output[i-1]])
-                features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1]])# , output[i-1]])
-                features_1 = np.concatenate([input[i, :], additional_input_scaled[i-1]])# , output[i - 1]])
-                window_features = np.array([features_0, features_1])
+            # Add padding (for additional_input) at timestep 0
+            # if config.USE_ADDITIONAL_INPUT:
+            #     # features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1]])# , output[i-1]])
+            #     # features_1 = np.concatenate([input[i, :], additional_input_scaled[i-1]])# , output[i - 1]])
+            #     features_0 = input[i-1 : i+1, :]
+            #     window_features = np.array([features_0, features_1])
 
-                features.append(window_features)
-                additional_labels.append(additional_input_scaled[i])
+            #     features.append(window_features)
 
-            else:
-                # features_0 = np.array([input[i-1, :]])#, output[i-1]])
-                # features_1 = np.array([input[i]])#, output[i-1]])
-                features.append(input[i-1 : i+1, :])
+            # else:
+            # features_0 = np.array([input[i-1, :]])#, output[i-1]])
+            # features_1 = np.array([input[i]])#, output[i-1]])
+
+            features.append(input[i-1 : i+1, :])
+            if i == 1:
+                print('Input features t = 1:')
+                print(input[i - 1 : i + 1, :])  
             
             labels.append(output[i])
+            additional_labels.append(additional_input_scaled[i])
+
 
         else: # t >= 2
             # TODO: Eleganter loesen!
             # Irgendwie mit [i] for i in ....
-            if config.USE_ADDITIONAL_INPUT:
-                features_1 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 2]])# , output[i - recurrent_timesteps]])
-                features_2 = np.concatenate([input[i, :], additional_input_scaled[i - 1]])# , output[i - 1]])
-                window_features = np.array([features_1, features_2])
+            # if config.USE_ADDITIONAL_INPUT:
+            #     features_1 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 2]])# , output[i - recurrent_timesteps]])
+            #     features_2 = np.concatenate([input[i, :], additional_input_scaled[i - 1]])# , output[i - 1]])
+            #     window_features = np.array([features_1, features_2])
 
-                features.append(window_features)
-                additional_labels.append(additional_input_scaled[i])
+            #     features.append(window_features)
 
-            else:
+            # else:
                 # features_1 = np.array([input[i - 1, :]])#, output[i - recurrent_timesteps]])
                 # features_2 = np.array([input[i, :]])#, output[i - 1]]) # DROP net profit AS INPUT, AS IT IS HANDLED IN THE HIDDEN STATE OF THE NETWORK
 
-                features.append(input[i - 1 : i + 1, :])                
+            features.append(input[i - 1 : i + 1, :]) 
+            if i == 2:
+                print('Input features t = 2:')
+                print(input[i - 1 : i + 1, :])               
             
             labels.append(output[i])
+            additional_labels.append(additional_input_scaled[i])
 
         
     # Convert to numpy array and reshape
@@ -130,12 +148,12 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     if config.USE_ADDITIONAL_INPUT:
         X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
         
-        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input
+        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input
 
     else:
         X_train, y_train, X_test, y_test = train_test_split(features, labels, additional_labels, train_ratio)
 
-        return X_train, y_train, X_test, y_test, scaler_output, scaler_input
+        return X_train, y_train, X_test, y_test, scaler_output, scaler_additional_input, scaler_input
 
 
 def train_test_split(features, labels, additional_labels, train_ratio):

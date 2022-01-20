@@ -1,5 +1,4 @@
 # main program
-import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
 from tensorflow import keras
