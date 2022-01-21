@@ -10,7 +10,7 @@ import data_postprocessing
 
 # Parameters
 # TODO: Global steuern, ob net profit oder additional input geplottet werden soll. Oder unnötig? (Immer nur net profit relevant)
-model_path = 'models/model_1_32.h5'
+model_path = 'models/model_RfB_1_32.h5'
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True
@@ -25,7 +25,7 @@ plot_train_mae_per_scenario = False
 
 # Create training and test data
 if config.USE_ADDITIONAL_INPUT:
-    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
+    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 else:
     X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
@@ -49,19 +49,20 @@ model_lstm.load_weights(model_path)
 
 # # Evaluate network - Get test and training accuracy
 if config.USE_ADDITIONAL_INPUT:
-    score = model_lstm.evaluate(X_test, [y_test, y_2_test], verbose=0)
-    score = model_lstm.evaluate(X_train, [y_train, y_2_train], verbose=0)
+    score_test = model_lstm.evaluate(X_test, [y_test, y_2_test], verbose=0)
+    score_train = model_lstm.evaluate(X_train, [y_train, y_2_train], verbose=0)
 else:
-    score = model_lstm.evaluate(X_test, y_test, verbose=0)
-    score = model_lstm.evaluate(X_train, y_train, verbose=0)
+    score_test = model_lstm.evaluate(X_test, y_test, verbose=0)
+    score_train = model_lstm.evaluate(X_train, y_train, verbose=0)
 
-print(f'Test loss: {score[0]} / Test mae: {score[1]}')
-print(f'Training loss: {score[0]} / Training mae: {score[1]}')
+print(f'Test loss: {score_test[0]} / Test mae: {score_test[1]}')
+print(f'Training loss: {score_train[0]} / Training mae: {score_train[1]}')
 
 # Make predictions
 # If an additional input, e.g. RfB, is used the net shall predict the test data using the predicted additional inputs recursively.
 if config.USE_ADDITIONAL_INPUT:
     predictions_np, predictions_additional_input = data_postprocessing.recursive_prediction(X_test, model_lstm)
+    # predictions_np, predictions_additional_input = model_lstm.predict(X_test)
     predictions_np_train, predictions_additional_input_train = model_lstm.predict(X_train)
 else:
     # predictions_np = data_postprocessing.recursive_prediction(X_test, model_lstm)
@@ -76,8 +77,8 @@ predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(prediction
 observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_test_original, 59)
 
 if config.USE_ADDITIONAL_INPUT:
-    y_2_test_original = scaler_input.inverse_transform(y_2_test)
-    predictions_additional_input_inverted = scaler_input.inverse_transform(predictions_additional_input)
+    y_2_test_original = scaler_additional_input.inverse_transform(y_2_test)
+    predictions_additional_input_inverted = scaler_additional_input.inverse_transform(predictions_additional_input)
 
     predictions_additional_input_mean = data_postprocessing.calculate_mean_per_timestep(predictions_additional_input_inverted, 59)
     observations_additional_input_mean = data_postprocessing.calculate_mean_per_timestep(y_2_test_original, 59)
@@ -101,10 +102,6 @@ if plot_test_accuracy:
 
 
 if plot_train_accuracy:
-
-    # Get training accuracy
-    score = model_lstm.evaluate(X_train, y_train, verbose=0)
-    print(f'Training loss: {score[0]} / Training mae: {score[1]}')
 
     training_predictions = predictions_np_train
 

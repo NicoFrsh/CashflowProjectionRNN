@@ -64,26 +64,23 @@ def recursive_prediction(X_test, rnn_model):
                 y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
             else:
                 y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
-            # print('y_hat_i type: ', type(y_hat_i))
-            # print('shape y_hat_i: ', y_hat_i.shape)
 
 
-        elif i == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector and predicted net profit from timestep 1
+        elif i == 1: # (i.e. t = 2):
             feature = X_test[i::59, :, :]
-            # feature[:,1,-1] = y_hat[i-1::59,0] 
-            feature[:,1,-1] = y_2_hat[i-1::59,0] # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted net profit from timestep 1
+            # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted ADDITIONAL_INPUT from timestep 1
+            feature[:,1,-1] = y_2_hat[i-1::59,0] 
             print('FEATURE (t=2): ', feature.shape)
             print(feature[0])
             if config.USE_ADDITIONAL_INPUT:
                 y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
             else:
                 y_hat_i = rnn_model.predict(feature, batch_size = 1)
-            print('y_hat_i: ', y_hat_i[:5])
-        else: # (t > 2): Use previous predictions of net profit as input for both input vectors
+            print('y_2_hat[:5]: ', y_2_hat[:5])
+        else: # (t > 2):
             feature = X_test[i::59, :, :]
-            # feature[:,0,-1] = y_hat[i-2::59, 0]
-            # feature[:,1,-1] = y_hat[i-1::59, 0]
-            feature[:,0,-1] = y_2_hat[i-2::59, 0] # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
+            # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
+            feature[:,0,-1] = y_2_hat[i-2::59, 0] 
             feature[:,1,-1] = y_2_hat[i-1::59, 0]
             if config.USE_ADDITIONAL_INPUT:
                 y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)

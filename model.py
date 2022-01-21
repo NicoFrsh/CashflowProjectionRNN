@@ -16,7 +16,7 @@ def create_rnn_model(lstm_input_shape, average_label, average_label_2 = None, ls
    name = 'net_profit_head')(lstm_layer)
 
    if config.USE_ADDITIONAL_INPUT: # Additional network head for additional input
-      additional_output_head = Dense(1, activation=config.OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label_2),
+      additional_output_head = Dense(1, activation=config.ADDITIONAL_OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label_2),
       name = 'additional_input_head')(lstm_layer)
    
       model = keras.Model(inputs = input, outputs =[net_profit_head, additional_output_head])

@@ -1,4 +1,5 @@
 # Data preprocessing
+from curses import use_default_colors
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -61,21 +62,22 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     # Concatenate inputs and additional inputs
     if config.USE_ADDITIONAL_INPUT:
         input = np.concatenate( (input, np.reshape(additional_input[:-1], (-1,1))), axis=1 )
-        print('Shape of inputs_concatenated: ', input.shape)
-        print('Inputs concatenated: ', input[0,:])
+
+    # Remove first (padded) entry of additional_input to retrieve original array
+    additional_input = additional_input[1:]
+
+    # TODO: Erst Train-Test-Split und dann MinMaxScaler!
 
     # Scale inputs to (0,1)
     # TODO: Additional input scaled to (0,1) as input but scaled to (-1,1) as output?!
     scaler_input = MinMaxScaler()
-    scaler_additional_input = MinMaxScaler()
     # Scale outputs to (-1,1)
     scaler_output = MinMaxScaler(feature_range = (-1,1))
+    scaler_additional_input = MinMaxScaler()
 
-    # TODO: Use same scaler for input and additional_input!
-    input = scaler_input.fit_transform(input,)
-    additional_input_scaled = scaler_additional_input.fit_transform(additional_input.reshape(-1,1))
-    # output_input = scaler_input.fit_transform(output.reshape(-1,1))
+    input = scaler_input.fit_transform(input) 
     output = scaler_output.fit_transform(output.reshape(-1,1))
+    additional_input = scaler_additional_input.fit_transform(additional_input.reshape(-1,1))
 
     # Create input data. Take current input parameters along with TIMESTEPS previous input parameters
     # to predict current output.
@@ -88,50 +90,25 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
         # Predictions can only be made starting at timestep 1
         if i % 60 == 0: # t = 0
             continue
+
         if i % 60 == 1: # t = 1
-            # Add padding (for additional_input) at timestep 0
-            # if config.USE_ADDITIONAL_INPUT:
-            #     # features_0 = np.concatenate([input[i-1, :], additional_input_scaled[i-1]])# , output[i-1]])
-            #     # features_1 = np.concatenate([input[i, :], additional_input_scaled[i-1]])# , output[i - 1]])
-            #     features_0 = input[i-1 : i+1, :]
-            #     window_features = np.array([features_0, features_1])
-
-            #     features.append(window_features)
-
-            # else:
-            # features_0 = np.array([input[i-1, :]])#, output[i-1]])
-            # features_1 = np.array([input[i]])#, output[i-1]])
-
+            # Add inputs at timesteps 1 and 0 (0 and 0 (padding) for additional_input!)
             features.append(input[i-1 : i+1, :])
-            if i == 1:
-                print('Input features t = 1:')
-                print(input[i - 1 : i + 1, :])  
-            
+            # Set output at timestep 1 as label
             labels.append(output[i])
-            additional_labels.append(additional_input_scaled[i])
+
+            if config.USE_ADDITIONAL_INPUT: # Set additional_input at timestep 1 as additional labels of the network
+                additional_labels.append(additional_input[i])
 
 
         else: # t >= 2
-            # TODO: Eleganter loesen!
-            # Irgendwie mit [i] for i in ....
-            # if config.USE_ADDITIONAL_INPUT:
-            #     features_1 = np.concatenate([input[i - 1, :], additional_input_scaled[i - 2]])# , output[i - recurrent_timesteps]])
-            #     features_2 = np.concatenate([input[i, :], additional_input_scaled[i - 1]])# , output[i - 1]])
-            #     window_features = np.array([features_1, features_2])
-
-            #     features.append(window_features)
-
-            # else:
-                # features_1 = np.array([input[i - 1, :]])#, output[i - recurrent_timesteps]])
-                # features_2 = np.array([input[i, :]])#, output[i - 1]]) # DROP net profit AS INPUT, AS IT IS HANDLED IN THE HIDDEN STATE OF THE NETWORK
-
-            features.append(input[i - 1 : i + 1, :]) 
-            if i == 2:
-                print('Input features t = 2:')
-                print(input[i - 1 : i + 1, :])               
-            
+            # Add inputs at timesteps t and t-1 (t-1 and t-2 (padding) for additional_input!)
+            features.append(input[i - 1 : i + 1, :])          
+            # Set output at timestep t as label
             labels.append(output[i])
-            additional_labels.append(additional_input_scaled[i])
+
+            if config.USE_ADDITIONAL_INPUT: # Set additional_input at timestep t as additional labels of the network
+                additional_labels.append(additional_input[i])
 
         
     # Convert to numpy array and reshape
@@ -153,7 +130,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     else:
         X_train, y_train, X_test, y_test = train_test_split(features, labels, additional_labels, train_ratio)
 
-        return X_train, y_train, X_test, y_test, scaler_output, scaler_additional_input, scaler_input
+        return X_train, y_train, X_test, y_test, scaler_output, scaler_input
 
 
 def train_test_split(features, labels, additional_labels, train_ratio):
