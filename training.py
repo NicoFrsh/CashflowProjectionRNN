@@ -46,7 +46,8 @@ model_lstm.summary()
 # Generate descriptive filename for model 
 model_name = 'models/model_'
 if config.USE_ADDITIONAL_INPUT:
-    model_name += '{0}_'.format(config.ADDITIONAL_INPUT)
+    additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
+    model_name += '{0}_'.format(additional_input_str)
 model_name += '{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
 
 callbacks = [ 

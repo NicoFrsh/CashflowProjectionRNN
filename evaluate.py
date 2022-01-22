@@ -10,7 +10,10 @@ import data_postprocessing
 
 # Parameters
 # TODO: Global steuern, ob net profit oder additional input geplottet werden soll. Oder unnötig? (Immer nur net profit relevant)
-model_path = 'models/model_RfB_1_32.h5'
+if config.USE_ADDITIONAL_INPUT:
+    model_path = 'models/model_{}_1_32.h5'.format(str.replace(config.ADDITIONAL_INPUT, ' ', '_'))
+else:
+    model_path = 'models/model_1_32.h5'
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True
@@ -92,8 +95,8 @@ if config.USE_ADDITIONAL_INPUT:
 if plot_test_accuracy:
     x = range(1,60)
     plt.figure(0)
-    plt.plot(x, predictions_np_mean, '.', label = 'Predictions')
-    plt.plot(x, observations_np_mean, 'x', label = 'Observations')
+    plt.plot(x, predictions_additional_input_mean, '.', label = 'Predictions')
+    plt.plot(x, observations_additional_input_mean, 'x', label = 'Observations')
     plt.xlabel('year')
     plt.ylabel(config.OUTPUT_VARIABLE)
     plt.title('Average of predictions vs. observations')

@@ -1,5 +1,4 @@
 # Data preprocessing
-from curses import use_default_colors
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler

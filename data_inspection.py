@@ -1,5 +1,6 @@
 # Data inspection
 # Evaluate saved model
+from statistics import mean
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -18,13 +19,22 @@ else:
     X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
-print('---------------')
-print('Shape X_test: ', X_test.shape)
-X_train_extract = X_train[1,:,:]
-print('Shape of inputs extract: ', X_train_extract[:,:-1].shape)
-print('Shape of additional_inputs extract: ', X_train_extract[:,-1].shape)
-print('Shape of additional_inputs extract after reshape: ', np.reshape(X_train_extract[:,-1], (2,1)).shape)
-print('Inverse transform of additional_input: ', scaler_additional_input.inverse_transform(np.reshape(X_train_extract[:,-1], (2,1))))
+# print('---------------')
+# print('Shape X_test: ', X_test.shape)
+# X_train_extract = X_train[1,:,:]
+# print('Shape of inputs extract: ', X_train_extract[:,:-1].shape)
+# print('Shape of additional_inputs extract: ', X_train_extract[:,-1].shape)
+# print('Shape of additional_inputs extract after reshape: ', np.reshape(X_train_extract[:,-1], (2,1)).shape)
+# print('Inverse transform of additional_input: ', scaler_additional_input.inverse_transform(np.reshape(X_train_extract[:,-1], (2,1))))
+
+# Get min, max and mean of additional_input
+min_train, max_train, mean_train = np.min(scaler_additional_input.inverse_transform(y_2_train)), np.max(scaler_additional_input.inverse_transform(y_2_train)), np.mean(scaler_additional_input.inverse_transform(y_2_train))
+min_test, max_test, mean_test = np.min(scaler_additional_input.inverse_transform(y_2_test)), np.max(scaler_additional_input.inverse_transform(y_2_test)), np.mean(scaler_additional_input.inverse_transform(y_2_test))
+
+print('Additional input is set to {}'.format(config.ADDITIONAL_INPUT))
+print('TRAIN: Min: {}, Max: {}, Mean: {}'.format(min_train, max_train, mean_train))
+print('TEST: Min: {}, Max: {}, Mean: {}'.format(min_test, max_test, mean_test))
+
 
 # X_train_extract = np.array( (scaler_input.inverse_transform(X_train_extract[:,:-1]), scaler_additional_input.inverse_transform(np.reshape(X_train_extract[:,-1], (2,1)))) )
 # print(X_train_extract)
