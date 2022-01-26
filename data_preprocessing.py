@@ -68,7 +68,6 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     # TODO: Erst Train-Test-Split und dann MinMaxScaler!
 
     # Scale inputs to (0,1)
-    # TODO: Additional input scaled to (0,1) as input but scaled to (-1,1) as output?!
     scaler_input = MinMaxScaler()
     # Scale outputs to (-1,1)
     scaler_output = MinMaxScaler(feature_range = (-1,1))

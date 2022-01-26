@@ -20,3 +20,8 @@ ADDITIONAL_OUTPUT_ACTIVATION = 'sigmoid'
 EPOCHS = 150
 
 VERBOSE = 0
+
+## Parameters for comparison of different versions
+# whether the scenario inputs Diskontfunktion, Aktien and Immobilien shall be converted to yearly values
+# (True) or left as accumulated values (False)
+use_yearly_inputs = True

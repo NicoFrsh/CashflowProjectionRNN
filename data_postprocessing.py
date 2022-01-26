@@ -4,7 +4,7 @@ import numpy as np
 from numpy.core.fromnumeric import shape
 import config
 
-# TODO: Check difference between two versions!
+# TODO: Check difference between two versions! Liegt an batch_size!
 def recursive_prediction_old(X_test, rnn_model):
     if config.USE_ADDITIONAL_INPUT:
         num_features = 15
