@@ -57,6 +57,13 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
     input = input.loc[:, parameters]
 
+    # Convert output to discounted output using the discount function of the scenario file
+    if config.use_discounted_np:
+
+        discount_function = input.loc[:, 'Diskontfunktion']
+        discount_function = discount_function.to_numpy()
+        output = output * discount_function
+
 
     # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
     # x_t = (x_t / x_{t-1}) - 1
@@ -96,8 +103,14 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     else: 
         error('Invalid activation function for additional_output_head!')
     
-    # Scale outputs to (-1,1)
-    scaler_output = MinMaxScaler(feature_range = (-1,1))
+    if (config.OUTPUT_ACTIVATION == 'tanh'):
+        # Scale outputs to (-1,1)
+        scaler_output = MinMaxScaler(feature_range = (-1,1))
+    elif (config.OUTPUT_ACTIVATION == 'sigmoid'):
+        # Scale outputs to (0,1)
+        scaler_output = MinMaxScaler()
+    else:
+        error('Invalid activation function for net_profit_head!')
 
     input = scaler_input.fit_transform(input) 
     output = scaler_output.fit_transform(output.reshape(-1,1))

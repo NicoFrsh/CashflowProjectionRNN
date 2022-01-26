@@ -14,8 +14,8 @@ TIMESTEPS = 2
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
 BATCH_SIZE = 1024
-OUTPUT_ACTIVATION = 'tanh'
-ADDITIONAL_OUTPUT_ACTIVATION = 'sigmoid'
+OUTPUT_ACTIVATION = 'sigmoid'
+ADDITIONAL_OUTPUT_ACTIVATION = 'tanh'
 
 EPOCHS = 150
 
@@ -24,4 +24,5 @@ VERBOSE = 0
 ## Parameters for comparison of different versions
 # whether the scenario inputs Diskontfunktion, Aktien and Immobilien shall be converted to yearly values
 # (True) or left as accum ulated values (False)
-use_yearly_inputs = False
+use_yearly_inputs = True
+use_discounted_np = True
