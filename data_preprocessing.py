@@ -1,4 +1,5 @@
 # Data preprocessing
+from distutils.log import error
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -56,6 +57,23 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
     input = input.loc[:, parameters]
 
+
+    # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
+    # x_t = (x_t / x_{t-1}) - 1
+    if config.use_yearly_inputs:
+
+        accumulated_inputs = input.loc[:, ['Diskontfunktion','Aktien','Immobilien']]
+        accumulated_inputs = accumulated_inputs.to_numpy()
+
+        for i in reversed(range(len(accumulated_inputs))): 
+            
+            if i % 60 != 0: # Value at t = 0 is always 1
+                accumulated_inputs[i,:] = (accumulated_inputs[i,:] / accumulated_inputs[i-1,:]) - 1
+
+        # Insert into input dataframe
+        input[['Diskontfunktion','Aktien','Immobilien']] = accumulated_inputs
+
+
     input = input.to_numpy()
 
     # Concatenate inputs and additional inputs
@@ -67,11 +85,19 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
 
     # TODO: Erst Train-Test-Split und dann MinMaxScaler!
 
-    # Scale inputs to (0,1)
-    scaler_input = MinMaxScaler()
+    if (config.ADDITIONAL_OUTPUT_ACTIVATION == 'sigmoid'):
+        # Scale inputs to (0,1) to be conform with the sigmoid activation function whos value lie in (0,1)
+        scaler_input = MinMaxScaler()
+        scaler_additional_input = MinMaxScaler()
+    elif (config.ADDITIONAL_OUTPUT_ACTIVATION == 'tanh'):
+        # Scale inputs to (-1,1) to be conform with the tanh activation function whos value lie in (-1,1)
+        scaler_input = MinMaxScaler(feature_range=(-1,1))
+        scaler_additional_input = MinMaxScaler(feature_range=(-1,1))
+    else: 
+        error('Invalid activation function for additional_output_head!')
+    
     # Scale outputs to (-1,1)
     scaler_output = MinMaxScaler(feature_range = (-1,1))
-    scaler_additional_input = MinMaxScaler()
 
     input = scaler_input.fit_transform(input) 
     output = scaler_output.fit_transform(output.reshape(-1,1))

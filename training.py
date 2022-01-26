@@ -44,7 +44,7 @@ model_lstm.summary()
 
 ## Create callbacks
 # Generate descriptive filename for model 
-model_name = 'models/model_'
+model_name = 'models/model_acc_tanh_'
 if config.USE_ADDITIONAL_INPUT:
     additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
     model_name += '{0}_'.format(additional_input_str)

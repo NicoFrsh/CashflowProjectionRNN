@@ -70,13 +70,12 @@ def recursive_prediction(X_test, rnn_model):
             feature = X_test[i::59, :, :]
             # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted ADDITIONAL_INPUT from timestep 1
             feature[:,1,-1] = y_2_hat[i-1::59,0] 
-            print('FEATURE (t=2): ', feature.shape)
-            print(feature[0])
+
             if config.USE_ADDITIONAL_INPUT:
                 y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
             else:
                 y_hat_i = rnn_model.predict(feature, batch_size = 1)
-            print('y_2_hat[:5]: ', y_2_hat[:5])
+                
         else: # (t > 2):
             feature = X_test[i::59, :, :]
             # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
