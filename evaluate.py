@@ -11,9 +11,9 @@ import data_postprocessing
 # Parameters
 # TODO: Global steuern, ob net profit oder additional input geplottet werden soll. Oder unnötig? (Immer nur net profit relevant)
 if config.USE_ADDITIONAL_INPUT:
-    model_path = 'models/model_{}_1_32.h5'.format(str.replace(config.ADDITIONAL_INPUT, ' ', '_'))
+    model_path = 'models/model_acc_{}_1_32.h5'.format(str.replace(config.ADDITIONAL_INPUT, ' ', '_'))
 else:
-    model_path = 'models/model_yearly_tanh_1_32.h5'
+    model_path = 'models/model_acc_1_32.h5'
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True

@@ -15,14 +15,17 @@ shuffled_validation_split = False
 if config.USE_ADDITIONAL_INPUT:
     X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    # Create validation data 
+    X_train, y_train, y_2_train, X_val, y_val, y_2_val = data_preprocessing.train_test_split(X_train, y_train, y_2_train, 0.8)
 else:
     X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    # Create validation data
+    X_train, y_train, X_val, y_val = data_preprocessing.train_test_split(X_train, y_train, [], 0.8)
 
-# Create validation data 
+
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
 # TODO: x_2_val und y_2_val fuer additional input
-X_val, y_val = [], []
 if shuffled_validation_split:
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
 
@@ -44,7 +47,7 @@ model_lstm.summary()
 
 ## Create callbacks
 # Generate descriptive filename for model 
-model_name = 'models/model_yearly_tanh_'
+model_name = 'models/model_acc_'
 if config.USE_ADDITIONAL_INPUT:
     additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
     model_name += '{0}_'.format(additional_input_str)
