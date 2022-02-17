@@ -28,4 +28,5 @@ VERBOSE = 0
 # whether the scenario inputs Diskontfunktion, Aktien and Immobilien shall be converted to yearly values
 # (True) or left as accumulated values (False)
 use_yearly_inputs = False
+# Whether the output (net profit) shall be discounted (True) or not (False)
 use_discounted_np = True

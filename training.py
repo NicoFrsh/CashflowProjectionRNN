@@ -38,7 +38,8 @@ average_label_2 = None
 if config.USE_ADDITIONAL_INPUT:
     average_label_2 = np.mean(y_2_train)
 
-model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
+# model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
+model_lstm = model.create_lstm_model(lstm_input_shape, average_label, average_label_2)
 
 model_lstm.summary()
 
@@ -87,9 +88,6 @@ if config.USE_ADDITIONAL_INPUT:
 else:
     history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
     validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
-
-print('History metrics:')
-print(history.history.keys())
 
 # Plot history of losses
 plt.figure()

@@ -13,15 +13,15 @@ import data_postprocessing
 if config.USE_ADDITIONAL_INPUT:
     model_path = 'models/model_acc_{}_1_32.h5'.format(str.replace(config.ADDITIONAL_INPUT, ' ', '_'))
 else:
-    model_path = 'models/model_acc_1_32.h5'
+    model_path = 'models/model_acc_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True
 plot_train_mse = True
-plot_test_mae = True
-plot_train_mae = True
-plot_test_mse_per_scenario = True
-plot_train_mse_per_scenario = True
+plot_test_mae = False
+plot_train_mae = False
+plot_test_mse_per_scenario = False
+plot_train_mse_per_scenario = False
 plot_test_mae_per_scenario = False
 plot_train_mae_per_scenario = False
 
@@ -78,6 +78,17 @@ predictions_np_inverted = scaler_output.inverse_transform(predictions_np)
 
 predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(predictions_np_inverted, 59)
 observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_test_original, 59)
+
+# Print maximal error 
+error = np.abs(predictions_np_mean - observations_np_mean)
+max_error = np.max(error)
+where = np.argmax(error)
+print('Max. error = ', max_error, ' at ', where)
+print('y_hat: ', predictions_np_mean[where])
+print('y_true: ', observations_np_mean[where])
+print('range of mean of observations: ', np.min(observations_np_mean), ' - ', np.max(observations_np_mean))
+print('range of mean of predictions: ', np.min(predictions_np_mean), ' - ', np.max(predictions_np_mean))
+
 
 if config.USE_ADDITIONAL_INPUT:
     y_2_test_original = scaler_additional_input.inverse_transform(y_2_test)

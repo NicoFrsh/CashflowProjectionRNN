@@ -122,6 +122,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     labels = []
     additional_labels = []
 
+    # TODO: Zeitschritte variabel machen (config.TIMESTEPS)!
     for i in range(1, len(output)):
 
         # Predictions can only be made starting at timestep 1
