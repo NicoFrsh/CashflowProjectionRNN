@@ -14,6 +14,9 @@ if config.USE_ADDITIONAL_INPUT:
     model_path = 'models/model_acc_{}_1_32.h5'.format(str.replace(config.ADDITIONAL_INPUT, ' ', '_'))
 else:
     model_path = 'models/model_acc_{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
+
+plot_parity = True
+plot_residual_histogram = True
 plot_test_accuracy = True
 plot_train_accuracy = True
 plot_test_mse = True
@@ -43,7 +46,7 @@ average_label_2 = None
 if config.USE_ADDITIONAL_INPUT:
     average_label_2 = np.mean(y_2_train)
 
-model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
+model_lstm = model.create_lstm_model(lstm_input_shape, average_label, average_label_2)
 
 model_lstm.summary()
 
@@ -71,6 +74,20 @@ else:
     # predictions_np = data_postprocessing.recursive_prediction(X_test, model_lstm)
     predictions_np = model_lstm.predict(X_test)
     predictions_np_train = model_lstm.predict(X_train)
+
+# Parity plot of test predictions vs. observations
+if plot_parity:
+    plt.figure(10)
+    plt.scatter(y_test, predictions_np, alpha=0.7)
+    plt.plot([-1,1], [-1,1], 'k--')
+    plt.xlabel('Observations')
+    plt.ylabel('Predictions')
+    plt.title('Parity Plot Test Data')
+
+# TODO: implement
+# if plot_residual_histogram:
+#     plt.figure(11)
+#     plt.hist()
 
 # Inverse scaling of outputs
 y_test_original = scaler_output.inverse_transform(y_test)

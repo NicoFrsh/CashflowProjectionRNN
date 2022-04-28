@@ -1,6 +1,8 @@
 # main program
+import random
 import numpy as np
 from sklearn.utils import shuffle
+import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
@@ -8,6 +10,11 @@ from sklearn.model_selection import train_test_split
 import config
 import data_preprocessing
 import model
+
+# Set random seed for reproducibility
+random.seed(1)
+np.random.seed(1)
+tf.random.set_seed(1)
 
 shuffled_validation_split = False
 

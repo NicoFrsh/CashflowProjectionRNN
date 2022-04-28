@@ -4,9 +4,12 @@ import numpy as np
 from sklearn.utils import shuffle
 import config
 import data_preprocessing, data_postprocessing, model
-
+from tensorflow import keras
+import tensorflow as tf
 model_path = 'models/model_1_32.h5'
 
+print(tf.__version__)
+print(keras.__version__)
 # Create training and test data
 X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)

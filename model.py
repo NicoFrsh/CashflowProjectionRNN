@@ -1,6 +1,4 @@
 from keras.engine.base_layer import Layer
-import numpy as np
-import tensorflow as tf
 import keras
 from keras.layers import Input, LSTM, SimpleRNN, Dense, Dropout, Embedding
 import config
@@ -80,8 +78,8 @@ def create_lstm_model(lstm_input_shape, average_label, average_label_2 = None, l
       model.compile(optimizer='adam', loss={'net_profit_head':'mse','additional_input_head':'mse'}, 
       loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
    else:
+      # model.compile(optimizer=tf.keras.optimizers.Adam(lr=0.005), loss='mse', metrics=['mae'])
       model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-
    # Two-headed architecture not programmable with sequential model!
    # model = keras.Sequential()
 
