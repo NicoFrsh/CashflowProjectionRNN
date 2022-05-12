@@ -1,4 +1,5 @@
 # Data preprocessing
+from audioop import add
 from distutils.log import error
 import pandas as pd
 import numpy as np
@@ -48,14 +49,28 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
 
     output = output['value'].to_numpy()
     additional_input = additional_input['value'].to_numpy()
+    # Create copy of additional_input for additional_input labels (no padding etc)
+    additional_output = additional_input.copy()
     # Duplicate first entry of additional_input for padding reasons (additional_input is shifted by 1 compared to scenario input!)
+    # TODO: PROBLEM! Muss das nicht zu Beginn von JEDEM Szenario gemacht werden? So nur bei Szenario 0!
+    # for _ in range(config.TIMESTEPS):
+    print('length add_input: ', len(additional_input))
+    indices = np.arange(0, len(additional_input), 60)
+    # additional_input = np.insert(additional_input, indices, additional_input[indices])
     additional_input = np.insert(additional_input, 0, additional_input[0])
+
+    print('length add_input after padding: ', len(additional_input))
 
     # Remove timestep 60 as the outputs only go to 59
     input = input[input['Zeit'] != 60]
     # Filter parameters
     parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
     input = input.loc[:, parameters]
+
+    # TODO: Padding 
+    # for _ in range(config.TIMESTEPS - 1):
+    #     input = np.insert(input, 0, input[0,:])
+
 
     # Convert output to discounted output using the discount function of the scenario file
     if config.use_discounted_np:
@@ -87,34 +102,32 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     if config.USE_ADDITIONAL_INPUT:
         input = np.concatenate( (input, np.reshape(additional_input[:-1], (-1,1))), axis=1 )
 
-    # Remove first (padded) entry of additional_input to retrieve original array
-    additional_input = additional_input[1:]
-
     # TODO: Erst Train-Test-Split und dann MinMaxScaler!
 
-    if (config.ADDITIONAL_OUTPUT_ACTIVATION == 'sigmoid'):
+    if (config.ADDITIONAL_OUTPUT_ACTIVATION == 'sigmoid' or config.ADDITIONAL_OUTPUT_ACTIVATION == 'relu' or config.ADDITIONAL_OUTPUT_ACTIVATION == 'linear'):
         # Scale inputs to (0,1) to be conform with the sigmoid activation function whos value lie in (0,1)
         scaler_input = MinMaxScaler()
-        scaler_additional_input = MinMaxScaler()
+        scaler_additional_output = MinMaxScaler()
+        input = scaler_input.fit_transform(input) 
+        additional_output = scaler_additional_output.fit_transform(additional_output.reshape(-1,1))
     elif (config.ADDITIONAL_OUTPUT_ACTIVATION == 'tanh'):
         # Scale inputs to (-1,1) to be conform with the tanh activation function whos value lie in (-1,1)
         scaler_input = MinMaxScaler(feature_range=(-1,1))
-        scaler_additional_input = MinMaxScaler(feature_range=(-1,1))
-    else: 
-        error('Invalid activation function for additional_output_head!')
+        scaler_additional_output = MinMaxScaler(feature_range=(-1,1))
+        input = scaler_input.fit_transform(input) 
+        additional_output = scaler_additional_output.fit_transform(additional_output.reshape(-1,1))
+
+
     
-    if (config.OUTPUT_ACTIVATION == 'tanh'):
+    if (config.OUTPUT_ACTIVATION == 'tanh' or config.OUTPUT_ACTIVATION == 'linear'):
         # Scale outputs to (-1,1)
         scaler_output = MinMaxScaler(feature_range = (-1,1))
-    elif (config.OUTPUT_ACTIVATION == 'sigmoid'):
+        output = scaler_output.fit_transform(output.reshape(-1,1))
+    elif (config.OUTPUT_ACTIVATION == 'sigmoid' or config.OUTPUT_ACTIVATION == 'relu'):
         # Scale outputs to (0,1)
         scaler_output = MinMaxScaler()
-    else:
-        error('Invalid activation function for net_profit_head!')
-
-    input = scaler_input.fit_transform(input) 
-    output = scaler_output.fit_transform(output.reshape(-1,1))
-    additional_input = scaler_additional_input.fit_transform(additional_input.reshape(-1,1))
+        output = scaler_output.fit_transform(output.reshape(-1,1))
+            
 
     # Create input data. Take current input parameters along with TIMESTEPS previous input parameters
     # to predict current output.
@@ -129,14 +142,16 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
         if i % 60 == 0: # t = 0
             continue
 
+        # TODO: Vielleicht: if i % 60 <= config.TIMESTEPS
         if i % 60 == 1: # t = 1
-            # Add inputs at timesteps 1 and 0 (0 and 0 (padding) for additional_input!)
+            # Add inputs at timesteps 1 and 0
+            # (0 and 0 (padding) for additional_input!)
             features.append(input[i-1 : i+1, :])
             # Set output at timestep 1 as label
             labels.append(output[i])
 
             if config.USE_ADDITIONAL_INPUT: # Set additional_input at timestep 1 as additional labels of the network
-                additional_labels.append(additional_input[i])
+                additional_labels.append(additional_output[i])
 
 
         else: # t >= 2
@@ -146,7 +161,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
             labels.append(output[i])
 
             if config.USE_ADDITIONAL_INPUT: # Set additional_input at timestep t as additional labels of the network
-                additional_labels.append(additional_input[i])
+                additional_labels.append(additional_output[i])
 
         
     # Convert to numpy array and reshape
@@ -163,7 +178,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, recurrent_timeste
     if config.USE_ADDITIONAL_INPUT:
         X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
         
-        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input
+        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_output, scaler_input
 
     else:
         X_train, y_train, X_test, y_test = train_test_split(features, labels, additional_labels, train_ratio)

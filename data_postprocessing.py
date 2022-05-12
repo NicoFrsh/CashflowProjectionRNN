@@ -211,3 +211,24 @@ def calculate_loss_per_scenario(targets, predictions, timesteps = 59, loss_metri
     total_loss = np.mean(loss)
     print('total_loss (per scenario): ', total_loss)
     return loss
+
+# TODO: Implement function that calculates the stochastic PVFP as:
+#               stoch. PVFP = mean of PVFP_s
+#       where s are the scenarios.
+def calculate_pvfp(net_profits):
+    """
+    Calculates the PVFP for a specific scenario using the formula
+        PVFP = sum_t d(t) * net_profit(t)
+    """
+
+    # Get discount function from inputs
+
+    # calculate PVFP
+    return 0
+
+def calculate_stochastic_pvfp(predictions):
+    
+    scenarios = []
+    pvfps = [calculate_pvfp(net_profits) for net_profits in scenarios]
+
+    return np.mean(pvfps)

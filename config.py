@@ -10,23 +10,24 @@ OUTPUT_VARIABLE = 'net profit'
 USE_ADDITIONAL_INPUT = False
 ADDITIONAL_INPUT = 'gross surplus'
 
-TRAIN_RATIO = 0.8
-
+MODEL_TYPE = 'lstm'
 TIMESTEPS = 2
 
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
 BATCH_SIZE = 1024
+# TODO: lineare Aktivierung ausprobieren!
 OUTPUT_ACTIVATION = 'tanh'
+# sigmoid am besten, da die Inputs alle positiv sind und dann die Skalierung auf (0,1) optimal ist.
 ADDITIONAL_OUTPUT_ACTIVATION = 'sigmoid'
 
-EPOCHS = 150
-
-VERBOSE = 0
+TRAIN_RATIO = 0.8
+EPOCHS = 500
 
 ## Parameters for comparison of different versions
 # whether the scenario inputs Diskontfunktion, Aktien and Immobilien shall be converted to yearly values
 # (True) or left as accumulated values (False)
+# TODO: True testen! Sollte eigentlich besser sein!
 use_yearly_inputs = False
 # Whether the output (net profit) shall be discounted (True) or not (False)
 use_discounted_np = True

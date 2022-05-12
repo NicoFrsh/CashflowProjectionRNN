@@ -1,4 +1,5 @@
 # main program
+import os
 import random
 import numpy as np
 from sklearn.utils import shuffle
@@ -9,12 +10,12 @@ from sklearn.model_selection import train_test_split
 
 import config
 import data_preprocessing
-import model
+from model import RNN_Model
 
 # Set random seed for reproducibility
-random.seed(1)
-np.random.seed(1)
-tf.random.set_seed(1)
+random.seed(config.RANDOM_SEED)
+np.random.seed(config.RANDOM_SEED)
+tf.random.set_seed(config.RANDOM_SEED)
 
 shuffled_validation_split = False
 
@@ -37,7 +38,7 @@ if shuffled_validation_split:
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
 
 # Input shape = (timesteps, # features)
-lstm_input_shape = (config.TIMESTEPS, X_train.shape[2])
+input_shape = (config.TIMESTEPS, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
@@ -46,7 +47,7 @@ if config.USE_ADDITIONAL_INPUT:
     average_label_2 = np.mean(y_2_train)
 
 # model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
-model_lstm = model.create_lstm_model(lstm_input_shape, average_label, average_label_2)
+model_lstm = RNN_Model(config.MODEL_TYPE, input_shape, average_label, average_label_2).model
 
 model_lstm.summary()
 
@@ -55,11 +56,13 @@ model_lstm.summary()
 
 ## Create callbacks
 # Generate descriptive filename for model 
-model_name = 'models/model_acc_'
+model_name = 'models/test_bs_{0}_{1}_'.format(config.BATCH_SIZE, config.MODEL_TYPE)
 if config.USE_ADDITIONAL_INPUT:
     additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
     model_name += '{0}_'.format(additional_input_str)
-model_name += '{0}_{1}.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
+model_name += '{0}_{1}/model.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
+
+os.makedirs(os.path.dirname(model_name), exist_ok=True)
 
 callbacks = [ 
     keras.callbacks.EarlyStopping(
@@ -67,8 +70,8 @@ callbacks = [
         monitor="val_loss",
         # "no longer improving" being defined as "no better than 1e-5 less"
         min_delta=1e-5,
-        # "no longer improving" being further defined as "for at least 10 epochs"
-        patience=15,
+        # "no longer improving" being further defined as "for at least 20 epochs"
+        patience=20,
         verbose=1,
     ),
     keras.callbacks.ModelCheckpoint(
@@ -83,7 +86,7 @@ callbacks = [
         monitor="val_loss",
         verbose=1,
     ),
-    keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1,
+    keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1,
     mode='min', min_delta=1e-5, cooldown=0, min_lr=0)
 ]
 
@@ -96,6 +99,14 @@ else:
     history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
     validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
+# Save history object with pickle
+import pickle
+# Save predictions array
+filename = os.path.dirname(model_name) + '/history.pickle'
+
+with open(filename, 'wb') as f:
+    pickle.dump(history.history, f)
+
 # Plot history of losses
 plt.figure()
 plt.plot(history.history['loss'])
@@ -104,4 +115,5 @@ plt.title('Model loss')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Validation'])
+plt.savefig(os.path.dirname(model_name) + '/loss_epochs.png')
 plt.show()
