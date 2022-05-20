@@ -6,10 +6,9 @@ import config
 
 # TODO: Check difference between two versions! Liegt an batch_size!
 def recursive_prediction_old(X_test, rnn_model):
-    if config.USE_ADDITIONAL_INPUT:
-        num_features = 15
-    else:
-        num_features = 14
+
+    num_features = X_test.shape[2]
+    
     # y_hat collects all predictions made by our network
     y_hat = []
 
@@ -49,25 +48,26 @@ def recursive_prediction_old(X_test, rnn_model):
     return y_hat
 
 
-def recursive_prediction(X_test, rnn_model):
+def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTEPS):
 
     num_features = X_test.shape[2]
+    projection_time = config.PROJECTION_TIME
 
     # y_hat collects all predictions made by our network
     y_hat = np.empty((X_test.shape[0], 1))
     y_2_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
 
-    for i in range(59):
-        if i == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
-            feature = X_test[i::59, :, :] # Take actual ADDITIONAL_INPUT from timestep 0 for both input vectors (padding!)
+    for i in range(projection_time):
+        if i == 0: # (t = 1): Take actual additional input from timestep 0 for all input vectors (padding!)
+            feature = X_test[i::projection_time, :, :]
             if config.USE_ADDITIONAL_INPUT: 
-                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
+                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,recurrent_timesteps+1,num_features)), batch_size = 1)
             else:
-                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,2,num_features)), batch_size = 1)
+                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,recurrent_timesteps + 1,num_features)), batch_size = 1)
 
 
         elif i == 1: # (i.e. t = 2):
-            feature = X_test[i::59, :, :]
+            feature = X_test[i::projection_time, :, :]
             # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted ADDITIONAL_INPUT from timestep 1
             feature[:,1,-1] = y_2_hat[i-1::59,0] 
 
@@ -76,6 +76,7 @@ def recursive_prediction(X_test, rnn_model):
             else:
                 y_hat_i = rnn_model.predict(feature, batch_size = 1)
                 
+        # TODO: Erweitern fuer recurrent timesteps > 2!!!
         else: # (t > 2):
             feature = X_test[i::59, :, :]
             # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
@@ -115,9 +116,7 @@ def calculate_mean_per_timestep(outputs, timesteps):
         mean_value = np.mean(outputs_extract)
         mean_outputs.append(mean_value)
 
-    mean_outputs = np.array(mean_outputs)
-
-    return mean_outputs
+    return np.array(mean_outputs)
 
 def calculate_loss_per_timestep(targets, predictions, timesteps = 59, loss_metric = 'mse'):
     """ 

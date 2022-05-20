@@ -19,6 +19,18 @@ else:
     X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
+labels = scaler_output.inverse_transform(y_train)
+print('first label: ')
+print(labels[0])
+features_extract = X_train[0, :, :]
+# features = [scaler_input.inverse_transform(X_train[:,i,:]) for i in range(config.TIMESTEPS)]
+# features = np.array(features)
+print('shape of features: ', features_extract.shape)
+# features = scaler_input.inverse_transform(X_train.reshape())
+
+print('first features: ')   
+print(features_extract)
+
 # print('---------------')
 # print('Shape X_test: ', X_test.shape)
 # X_train_extract = X_train[1,:,:]

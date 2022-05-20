@@ -10,19 +10,14 @@ import config
 import data_postprocessing
 
 
-# This code is to load predictions and targets 
-if config.USE_ADDITIONAL_INPUT:
-    filepath = 'models/bs_{0}_{1}_{2}_{3}_{4}/data.pickle'.format(config.BATCH_SIZE, config.MODEL_TYPE, str.replace(config.ADDITIONAL_INPUT, ' ', '_'), config.LSTM_LAYERS, config.LSTM_CELLS)
-else:
-    filepath = 'models/test_bs_{0}_{1}_{2}_{3}/data.pickle'.format(config.BATCH_SIZE, config.MODEL_TYPE, config.LSTM_LAYERS, config.LSTM_CELLS)
+# Load predictions and targets
+filepath = config.MODEL_PATH + '/data.pickle'
 
 with open(filepath, 'rb') as f:
     data = pickle.load(f)
 
-if config.USE_ADDITIONAL_INPUT:
-    filepath = 'models/bs_{0}_{1}_{2}_{3}_{4}/history.pickle'.format(config.BATCH_SIZE, config.MODEL_TYPE, str.replace(config.ADDITIONAL_INPUT, ' ', '_'), config.LSTM_LAYERS, config.LSTM_CELLS)
-else:
-    filepath = 'models/test_bs_{0}_{1}_{2}_{3}/history.pickle'.format(config.BATCH_SIZE, config.MODEL_TYPE, config.LSTM_LAYERS, config.LSTM_CELLS)
+# Load keras history dictionary
+filepath = config.MODEL_PATH + '/history.pickle'
 
 with open(filepath, 'rb') as f:
     history = pickle.load(f)
@@ -42,9 +37,12 @@ else:
 
 print('val_mae: ', val_mae)
 
-pred = data[0]
+pred_test = data[0]
 y = data[1]
-pred_original = data[2]
+
+print('pred_test length: ', pred_test.size)
+print('y_test length: ', y.size)
+pred_test_original = data[2]
 y_original = data[3]
 if len(data) > 4:
     pred_train = data[4]
@@ -52,40 +50,47 @@ if len(data) > 4:
 
 # TODO: Count y_original == 0 vs. pred_original == 0
 print('# of zeros in targets: ', np.count_nonzero(y_original == 0))
-print('# of zeros in pred: ', np.count_nonzero(pred_original==0))
+print('# of zeros in pred: ', np.count_nonzero(np.absolute(pred_test_original) < 10**-4))
 
 # Find where targets are zero and find out which timestep that corresponds to
 indices = np.where(y_original == 0)[0]
 
 # Compare to predictions at those indices
-pred_zero = pred_original[indices]
-print('pred_zero: ', pred_zero[:6])
+pred_test_zero = pred_test_original[indices]
+print('pred_zero: ', pred_test_zero[:6])
 # modulo = [59 for i in indices]
 # modulo = np.array(modulo)
 indices = np.mod(indices, 59)
 
-print('indices: ', indices[:10])
-
 # Plot MSE for each timestep. Should be higher in first 10 years.
-mse_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred)
-mae_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred, loss_metric='mae')
-x = range(1,60)
+mse_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test)
+mae_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test, loss_metric='mae')
+x_time = range(1,60)
+x_scen = range(1001)
+
+plt.figure(19)
+plt.plot(x_scen, data_postprocessing.calculate_loss_per_scenario(y, pred_test))
+plt.title('MSE per scenario')
 
 plt.figure(21)
-plt.plot(x, mse_over_timesteps)
+plt.plot(x_time, mse_over_timesteps)
 plt.title('MSE over timesteps')
 
 plt.figure(22)
-plt.plot(x, mae_over_timesteps)
+plt.plot(x_time, mae_over_timesteps)
 plt.title('MAE over timesteps')
 
+plt.figure(23)
+plt.plot(x_time, data_postprocessing.calculate_loss_per_timestep(y_train, pred_train, loss_metric='mse'))
+plt.title('MSE over timesteps (Train Data)')
+
 plt.figure(20)
-plt.hist(indices)
+plt.hist(indices, bins = 59)
 plt.title('Histogram of zeros-entries')
 
 # Parity plot
 plt.figure(0)
-plt.scatter(y, pred, alpha=0.7)
+plt.scatter(y, pred_test, alpha=0.7)
 plt.plot([-1,1], [-1,1], 'k--')
 plt.xlabel('Observations')
 plt.ylabel('Predictions')
@@ -96,7 +101,7 @@ plt.savefig(os.path.dirname(filepath) + '/parity.png')
 min = np.min(y_original)
 max = np.max(y_original)
 plt.figure(9)
-plt.scatter(y_original, pred_original, alpha=0.7)
+plt.scatter(y_original, pred_test_original, alpha=0.7)
 plt.plot([min,max], [min,max], 'k--')
 plt.xlabel('Observations')
 plt.ylabel('Predictions')
@@ -104,12 +109,12 @@ plt.title('Parity Plot Test Data Original Scale')
 
 # Compute residuals
 # TODO: Use original scale to obtain better interpretability
-res = y - pred
+res = y - pred_test
 plt.figure(1)
 plt.hist(res, bins='auto', range=(-0.03,0.03))
 plt.title('Histogram of residuals')
 
-res_original = y_original - pred_original
+res_original = y_original - pred_test_original
 plt.figure(2)
 plt.hist(res_original, bins=100, range=(-100000000,100000000))
 plt.title('Histogram of residuals (original scale)')
@@ -118,10 +123,10 @@ print('Mean of residuals: ', np.mean(res_original))
 print('Min: ', np.min(res_original), ' Max: ', np.max(res_original))
 
 print('Range of observations: ', np.min(y_original), ' - ', np.max(y_original))
-print('Range of predictions: ', np.min(pred_original), ' - ', np.max(pred_original))
+print('Range of predictions: ', np.min(pred_test_original), ' - ', np.max(pred_test_original))
 
-predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(pred_original, 59)
-observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_original, 59)
+predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(pred_test_original, config.PROJECTION_TIME)
+observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_original, config.PROJECTION_TIME)
 
 x = range(1,60)
 plt.figure(3)
@@ -141,43 +146,44 @@ plt.title('Boxplot of residuals')
 
 # Distribution of predictions vs. targets
 plt.figure(5)
-plt.hist(y_original, bins=1000, range=(-20000000,100000000))
-plt.hist(pred_original, bins=1000, range=(-20000000,100000000))
-plt.legend(loc = 'upper left')
+plt.hist(y_original, bins=1000, range=(-20000000,100000000), alpha = 0.7, label='Observations')
+plt.hist(pred_test_original, bins=1000, range=(-20000000,100000000), alpha= 0.7, label='Predictions')
+plt.legend()
 plt.title('Distribution y_target vs. y_pred')
 
 # Distribution of predictions vs. targets
 if len(data) > 4:
     plt.figure(6)
-    plt.hist(y_train, bins='auto', range=(0.8,1))
-    plt.hist(pred_train, bins='auto', range=(0.8,1))
-    plt.legend(loc = 'upper left')
+    plt.hist(y_train, bins='auto', range=(0.8,1), alpha = 0.7, label='Observations')
+    plt.hist(pred_train, bins='auto', range=(0.8,1), alpha = 0.7, label='Predictions')
+    plt.legend()
     plt.title('Distribution y_train vs. pred_train')
+    plt.savefig(os.path.dirname(filepath) + '/distribution.png')
 
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score, explained_variance_score
 
 # MSE
-mse = mean_squared_error(y, pred)
+mse = mean_squared_error(y, pred_test)
 print('MSE = ', mse)
 
-mse_orig = mean_squared_error(y_original, pred_original)
+mse_orig = mean_squared_error(y_original, pred_test_original)
 print('MSE (original): ', mse_orig)
 
 # Mean absolute error
-mae = mean_absolute_error(y, pred)
+mae = mean_absolute_error(y, pred_test)
 print('MAE = ', mae)
 
 # Compute Mean Absolute Percentage Error (MAPE)
-sk_mape = mean_absolute_percentage_error(y, pred) * 100
+sk_mape = mean_absolute_percentage_error(y, pred_test) * 100
 print('MAPE: ', sk_mape)
-mape = np.mean(np.abs((y - pred) / y)) * 100
+mape = np.mean(np.abs((y - pred_test) / y)) * 100
 print('MAPE = ', mape)
 
 # Symmetric Mean Absolute Percentage Error (SMAPE)
-smape = np.mean((np.abs(y - pred)) / ((np.abs(y) + np.abs(pred)) / 2)) * 100
+smape = np.mean((np.abs(y - pred_test)) / ((np.abs(y) + np.abs(pred_test)) / 2)) * 100
 print('SMAPE = ', smape)
 
-smape_2 = np.mean((np.abs(y - pred)) / (np.abs(y) + np.abs(pred))) * 100
+smape_2 = np.mean((np.abs(y - pred_test)) / (np.abs(y) + np.abs(pred_test))) * 100
 print('adj. SMAPE = ', smape_2)
 
 # Mean Absolute Scaled Error (MASE)
@@ -191,14 +197,14 @@ print('adj. SMAPE = ', smape_2)
 # MRAE 
 y_shifted = np.roll(y,1)
 y_shifted[0] = 0
-mrae = np.mean(np.abs((y - pred) / (y - y_shifted))) * 100
+mrae = np.mean(np.abs((y - pred_test) / (y - y_shifted))) * 100
 print('MRAE = ', mrae)
 
 # R-squared
-score = r2_score(y, pred)
+score = r2_score(y, pred_test)
 print('R-squared: ', score)
 
-explained_variance = explained_variance_score(y, pred)
+explained_variance = explained_variance_score(y, pred_test)
 print('Explained variance score: ', explained_variance)
 
 plt.show()

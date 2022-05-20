@@ -38,7 +38,7 @@ if shuffled_validation_split:
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
 
 # Input shape = (timesteps, # features)
-input_shape = (config.TIMESTEPS, X_train.shape[2])
+input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
@@ -56,11 +56,19 @@ model_lstm.summary()
 
 ## Create callbacks
 # Generate descriptive filename for model 
-model_name = 'models/test_bs_{0}_{1}_'.format(config.BATCH_SIZE, config.MODEL_TYPE)
-if config.USE_ADDITIONAL_INPUT:
-    additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
-    model_name += '{0}_'.format(additional_input_str)
-model_name += '{0}_{1}/model.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
+model_name = config.MODEL_PATH + '/model.h5'
+# model_name = 'models/new_'
+# if config.use_yearly_inputs:
+#     model_name += 'yearly_'
+# if config.use_discounted_np:
+#     model_name += 'discounted_'
+# if config.RNN_ACTIVATION != 'tanh':
+#     model_name += config.RNN_ACTIVATION + '_' + config.OUTPUT_ACTIVATION + '_'
+# model_name += 'T_{0}_bs_{1}_{2}_'.format(config.TIMESTEPS, config.BATCH_SIZE, config.MODEL_TYPE)
+# if config.USE_ADDITIONAL_INPUT:
+#     additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
+#     model_name += '{0}_'.format(additional_input_str)
+# model_name += '{0}_{1}/model.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
 
 os.makedirs(os.path.dirname(model_name), exist_ok=True)
 

@@ -9,10 +9,7 @@ import data_preprocessing
 from model import RNN_Model
 import data_postprocessing
 
-if config.USE_ADDITIONAL_INPUT:
-    model_path = 'models/bs_{0}_{1}_{2}_{3}_{4}/model.h5'.format(config.BATCH_SIZE, config.MODEL_TYPE, str.replace(config.ADDITIONAL_INPUT, ' ', '_'), config.LSTM_LAYERS, config.LSTM_CELLS)
-else:
-    model_path = 'models/test_bs_{0}_{1}_{2}_{3}/model.h5'.format(config.BATCH_SIZE, config.MODEL_TYPE, config.LSTM_LAYERS, config.LSTM_CELLS)
+model_path = config.MODEL_PATH + '/model.h5'
 
 # Create training and test data
 if config.USE_ADDITIONAL_INPUT:
@@ -23,7 +20,7 @@ else:
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
 # Input shape = (timesteps, # features)
-input_shape = (config.TIMESTEPS, X_train.shape[2])
+input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
 average_label = np.mean(y_train)
@@ -54,7 +51,7 @@ predictions_original = scaler_output.inverse_transform(predictions_np)
 y_original = scaler_output.inverse_transform(y_test)
 
 # Save predictions array
-filename = os.path.dirname(model_path) + '/data.pickle'
+filename = config.MODEL_PATH + '/data.pickle'
 
 with open(filename, 'wb') as f:
     pickle.dump([predictions_np,y_test, predictions_original, y_original, predictions_np_train, y_train], f)
