@@ -21,15 +21,15 @@ shuffled_validation_split = False
 
 # Create training and test data
 if config.USE_ADDITIONAL_INPUT:
-    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
     # Create validation data 
-    X_train, y_train, y_2_train, X_val, y_val, y_2_val = data_preprocessing.train_test_split(X_train, y_train, y_2_train, 0.8)
+    # X_train, y_train, y_2_train, X_val, y_val, y_2_val = data_preprocessing.train_test_split(X_train, y_train, y_2_train, 0.9)
 else:
-    X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
     # Create validation data
-    X_train, y_train, X_val, y_val = data_preprocessing.train_test_split(X_train, y_train, [], 0.8)
+    # X_train, y_train, X_val, y_val = data_preprocessing.train_test_split(X_train, y_train, [], 0.9)
 
 
 # TODO: stratified split! Bisher ist ohne shuffle noch besser!
@@ -54,22 +54,10 @@ model_lstm.summary()
 # TODO: Install graphviz via brew
 # keras.utils.plot_model(model_lstm, 'lstm_model.png', show_shapes = True)
 
-## Create callbacks
 # Generate descriptive filename for model 
 model_name = config.MODEL_PATH + '/model.h5'
-# model_name = 'models/new_'
-# if config.use_yearly_inputs:
-#     model_name += 'yearly_'
-# if config.use_discounted_np:
-#     model_name += 'discounted_'
-# if config.RNN_ACTIVATION != 'tanh':
-#     model_name += config.RNN_ACTIVATION + '_' + config.OUTPUT_ACTIVATION + '_'
-# model_name += 'T_{0}_bs_{1}_{2}_'.format(config.TIMESTEPS, config.BATCH_SIZE, config.MODEL_TYPE)
-# if config.USE_ADDITIONAL_INPUT:
-#     additional_input_str = str.replace(config.ADDITIONAL_INPUT, " ", "_")
-#     model_name += '{0}_'.format(additional_input_str)
-# model_name += '{0}_{1}/model.h5'.format(config.LSTM_LAYERS, config.LSTM_CELLS)
 
+## Create callbacks
 os.makedirs(os.path.dirname(model_name), exist_ok=True)
 
 callbacks = [ 
@@ -123,5 +111,5 @@ plt.title('Model loss')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Validation'])
-plt.savefig(os.path.dirname(model_name) + '/loss_epochs.png')
+plt.savefig(os.path.dirname(model_name) + '/loss_epochs.eps')
 plt.show()

@@ -8,7 +8,8 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import config
 
-def prepare_data(scenario_path, outputs_path, output_variable, projection_time = config.PROJECTION_TIME, recurrent_timesteps = config.TIMESTEPS, shuffle_data = False, train_ratio = config.TRAIN_RATIO):
+def prepare_data(scenario_path, outputs_path, output_variable, projection_time = config.PROJECTION_TIME, 
+                recurrent_timesteps = config.TIMESTEPS, shuffle_data = False, train_ratio = config.TRAIN_RATIO):
     """
     Prepares data and gets it ready to serve as input to LSTM-Neural-Network.
     Parameters:
@@ -60,7 +61,10 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     print('add_input after padding: ', additional_input.size)
 
     # Remove timestep 60 as the outputs only go to 59
-    input = input[input['Zeit'] != 60]
+    # TODO: dynamisch, bzw. 10k lauf nochmal machen wo es wirklich bis t=60 geht
+    input = input[input['Zeit'] != projection_time + 1]
+    input = input[input['Zeit'] != projection_time + 2]
+
     # Filter parameters
     parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
     input = input.loc[:, parameters]    
@@ -107,9 +111,9 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         # plt.legend()
         # plt.show()
 
-        scaler_yearly_inputs = MinMaxScaler(feature_range=(-1,1))
+        scaler_yearly_inputs = MinMaxScaler(feature_range=(0,1))
         yearly_inputs = scaler_yearly_inputs.fit_transform(yearly_inputs)
-        scaler_input = MinMaxScaler()
+        scaler_input = MinMaxScaler(feature_range=(0,1))
         input = scaler_input.fit_transform(input)
 
         # Insert into input dataframe
@@ -121,7 +125,6 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         input = input.to_numpy()
         scaler_input = MinMaxScaler()
         input = scaler_input.fit_transform(input)
-    # input = input.to_numpy()
 
     print('len(input) before padding: ', input.shape[0])
 
@@ -194,46 +197,56 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     #       D.h. vor allem im Testset sollten 20% (bei train_ratio = 0.8) aller Scenarien zu allen Zeitschritten
     #       (1-59) enthalten sein.
     if shuffle_data == True:
-        features, labels = shuffle(features, labels, additional_labels, random_state=config.RANDOM_SEED)
+        features, labels, additional_labels = shuffle(features, labels, additional_labels, random_state=config.RANDOM_SEED)
         
 
-    # Split into train and test sets
+    # Split into train, validation and test sets
     if config.USE_ADDITIONAL_INPUT:
-        X_train, y_train, y_2_train, X_test, y_test, y_2_test = train_test_split(features, labels, additional_labels, train_ratio)
-        
-        return X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_output, scaler_input
+        X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test = train_val_test_split(features, labels, additional_labels, train_ratio)
+        return X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_output, scaler_input
 
     else:
-        X_train, y_train, X_test, y_test = train_test_split(features, labels, additional_labels, train_ratio)
+        X_train, y_train, X_val, y_val, X_test, y_test = train_val_test_split(features, labels, additional_labels, train_ratio)
+        return X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input
 
-        return X_train, y_train, X_test, y_test, scaler_output, scaler_input
 
-
-def train_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME):
+def train_val_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME):
     """
-    Splits the full dataset (features and labels) into training and test set. Here, it is crucial that
-    the split point is not in the middle of a scenario but exactly between two scenarios.
+    Splits the full dataset (features and labels) into training, validation and test set using 'train_ratio' percent of
+    the data as training data and the rest evenly distributed as validation and test data. E.g. train_ratio = 0.9:  
+            0.9 : 0.05 : 0.05 - Split
+    Here, it is crucial that the split point is not in the middle of a scenario but exactly between two scenarios.
     """
 
+    # TODO: Add shuffled split!
     total_scenarios = len(labels) / projection_time
 
-    train_scenarios = int(total_scenarios * train_ratio)
+    train_scenarios_end = int(total_scenarios * train_ratio)
+    val_scenarios_end = int(total_scenarios * (train_ratio + ((1-train_ratio)/2)))
 
-    idx_train_end = train_scenarios * projection_time
+    idx_train_end = train_scenarios_end * projection_time
+    idx_val_end = val_scenarios_end * projection_time
 
     X_train = features[:idx_train_end,:,:]
     y_train = labels[:idx_train_end,:]
-    X_test = features[idx_train_end:,:,:]
-    y_test = labels[idx_train_end:,:]
+    print('len(y_train): ', len(y_train))
+    X_val = features[idx_train_end:idx_val_end,:,:]
+    y_val = labels[idx_train_end:idx_val_end,:]
+    print('len(y_val): ', len(y_val))
+    X_test = features[idx_val_end:,:,:]
+    y_test = labels[idx_val_end:,:]
+    print('len(y_test): ', len(y_test))
+
 
     if config.USE_ADDITIONAL_INPUT:
         y_2_train = additional_labels[:idx_train_end,:]
-        y_2_test = additional_labels[idx_train_end:,:]
+        y_2_val = additional_labels[idx_train_end:idx_val_end,:]
+        y_2_test = additional_labels[idx_val_end:,:]
 
-        return X_train, y_train, y_2_train, X_test, y_test, y_2_test
+        return X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test
 
     else:
-        return X_train, y_train, X_test, y_test
+        return X_train, y_train, X_val, y_val, X_test, y_test
 
 def add_padding_to_additional_input(input, timesteps = config.TIMESTEPS, projection_time = config.PROJECTION_TIME):
     """

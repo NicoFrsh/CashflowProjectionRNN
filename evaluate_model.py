@@ -13,9 +13,11 @@ import data_postprocessing
 # Load predictions and targets
 filepath = config.MODEL_PATH + '/data.pickle'
 
-with open(filepath, 'rb') as f:
-    data = pickle.load(f)
-
+if (os.path.exists(filepath)):
+    with open(filepath, 'rb') as f:
+        data = pickle.load(f)
+else: 
+    data = []
 # Load keras history dictionary
 filepath = config.MODEL_PATH + '/history.pickle'
 
@@ -40,15 +42,13 @@ print('val_mae: ', val_mae)
 pred_test = data[0]
 y = data[1]
 
-print('pred_test length: ', pred_test.size)
-print('y_test length: ', y.size)
 pred_test_original = data[2]
 y_original = data[3]
 if len(data) > 4:
     pred_train = data[4]
     y_train = data[5]
 
-# TODO: Count y_original == 0 vs. pred_original == 0
+# Count y_original == 0 vs. pred_original == 0
 print('# of zeros in targets: ', np.count_nonzero(y_original == 0))
 print('# of zeros in pred: ', np.count_nonzero(np.absolute(pred_test_original) < 10**-4))
 
@@ -62,31 +62,43 @@ print('pred_zero: ', pred_test_zero[:6])
 # modulo = np.array(modulo)
 indices = np.mod(indices, 59)
 
+plt.figure(20)
+plt.hist(indices, bins = 59)
+plt.xlabel('Timestep')
+plt.ylabel('Frequency')
+plt.title('Histogram of zeros-entries')
+
 # Plot MSE for each timestep. Should be higher in first 10 years.
 mse_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test)
 mae_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test, loss_metric='mae')
 x_time = range(1,60)
-x_scen = range(1001)
+x_scen = range(int(len(y) / config.PROJECTION_TIME))
+
+print('length y_test: ', len(y))
 
 plt.figure(19)
-plt.plot(x_scen, data_postprocessing.calculate_loss_per_scenario(y, pred_test))
+plt.plot(x_scen, data_postprocessing.calculate_loss_per_scenario(y, pred_test), '.')
+plt.xlabel('Scenario')
+plt.ylabel('MSE')
 plt.title('MSE per scenario')
 
 plt.figure(21)
 plt.plot(x_time, mse_over_timesteps)
-plt.title('MSE over timesteps')
+plt.xlabel('Timestep')
+plt.ylabel('MSE')
+plt.title('MSE over timesteps (Test Data)')
 
 plt.figure(22)
 plt.plot(x_time, mae_over_timesteps)
-plt.title('MAE over timesteps')
+plt.xlabel('Timestep')
+plt.ylabel('MAE')
+plt.title('MAE over timesteps (Test Data)')
 
 plt.figure(23)
 plt.plot(x_time, data_postprocessing.calculate_loss_per_timestep(y_train, pred_train, loss_metric='mse'))
+plt.xlabel('Timestep')
+plt.ylabel('MSE')
 plt.title('MSE over timesteps (Train Data)')
-
-plt.figure(20)
-plt.hist(indices, bins = 59)
-plt.title('Histogram of zeros-entries')
 
 # Parity plot
 plt.figure(0)
@@ -95,7 +107,7 @@ plt.plot([-1,1], [-1,1], 'k--')
 plt.xlabel('Observations')
 plt.ylabel('Predictions')
 plt.title('Parity Plot Test Data')
-plt.savefig(os.path.dirname(filepath) + '/parity.png')
+plt.savefig(os.path.dirname(filepath) + '/parity.pdf')
 
 # Parity plot original scale
 min = np.min(y_original)
@@ -106,6 +118,8 @@ plt.plot([min,max], [min,max], 'k--')
 plt.xlabel('Observations')
 plt.ylabel('Predictions')
 plt.title('Parity Plot Test Data Original Scale')
+plt.savefig(os.path.dirname(filepath) + '/parity_original.pdf')
+
 
 # Compute residuals
 # TODO: Use original scale to obtain better interpretability
@@ -116,8 +130,9 @@ plt.title('Histogram of residuals')
 
 res_original = y_original - pred_test_original
 plt.figure(2)
-plt.hist(res_original, bins=100, range=(-100000000,100000000))
+plt.hist(res_original, bins='auto', range=(-100000000,100000000))
 plt.title('Histogram of residuals (original scale)')
+plt.savefig(os.path.dirname(filepath) + '/hist_res_original.eps')
 
 print('Mean of residuals: ', np.mean(res_original))
 print('Min: ', np.min(res_original), ' Max: ', np.max(res_original))
@@ -136,7 +151,7 @@ plt.xlabel('year')
 plt.ylabel(config.OUTPUT_VARIABLE)
 plt.title('Average of predictions vs. observations')
 plt.legend()
-plt.savefig(os.path.dirname(filepath) + '/accuracy.png')
+plt.savefig(os.path.dirname(filepath) + '/accuracy.eps')
 
 
 # Boxplot of residuals
@@ -158,7 +173,7 @@ if len(data) > 4:
     plt.hist(pred_train, bins='auto', range=(0.8,1), alpha = 0.7, label='Predictions')
     plt.legend()
     plt.title('Distribution y_train vs. pred_train')
-    plt.savefig(os.path.dirname(filepath) + '/distribution.png')
+    plt.savefig(os.path.dirname(filepath) + '/distribution.pdf')
 
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score, explained_variance_score
 

@@ -26,13 +26,13 @@ class RNN_Model:
          for i in range(recurrent_layers - 1):
 
             if model_type == 'simple_rnn':
-               current_output = SimpleRNN(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True)(current_output)
+               current_output = SimpleRNN(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True, dropout=0.1)(current_output)
             
             elif model_type == 'lstm':
-               current_output = LSTM(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True)(current_output)
+               current_output = LSTM(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True, dropout=0.1)(current_output)
 
             elif model_type == 'gru':
-               current_output = GRU(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True)(current_output)
+               current_output = GRU(int(recurrent_cells / (2**i)), activation=config.RNN_ACTIVATION, return_sequences=True, dropout=0.1)(current_output)
 
       if model_type == 'simple_rnn':
          current_output = SimpleRNN(int(recurrent_cells / (2**(recurrent_layers-1))), activation=config.RNN_ACTIVATION)(current_output)
@@ -45,6 +45,9 @@ class RNN_Model:
 
       # Add Batch Normalization
       # current_output = BatchNormalization()(current_output)
+
+      # Add Dropout Layer (performs worse)
+      # current_output = Dropout(0.2)(current_output)
 
       net_profit_head = Dense(1, activation=config.OUTPUT_ACTIVATION, bias_initializer=keras.initializers.Constant(average_label),
       name = 'net_profit_head')(current_output)

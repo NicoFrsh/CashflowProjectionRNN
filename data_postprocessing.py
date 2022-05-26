@@ -58,34 +58,16 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTE
     y_2_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
 
     for i in range(projection_time):
-        if i == 0: # (t = 1): Take actual additional input from timestep 0 for all input vectors (padding!)
-            feature = X_test[i::projection_time, :, :]
-            if config.USE_ADDITIONAL_INPUT: 
-                y_hat_i, y_2_hat_i = rnn_model.predict(np.reshape(feature, (-1,recurrent_timesteps+1,num_features)), batch_size = 1)
-            else:
-                y_hat_i = rnn_model.predict(np.reshape(feature, (-1,recurrent_timesteps + 1,num_features)), batch_size = 1)
+        # ...
+        t_rec = min(recurrent_timesteps + 1, i)
 
+        feature = X_test[i::projection_time, :, :]
+        for j in range(1, t_rec + 1):
+            # Replace additional input with predictions of additional input
+            feature[:,-j,-1] = y_2_hat[i-j::59,0]
 
-        elif i == 1: # (i.e. t = 2):
-            feature = X_test[i::projection_time, :, :]
-            # Take actual ADDITIONAL_INPUT from timestep 0 for the first input vector and predicted ADDITIONAL_INPUT from timestep 1
-            feature[:,1,-1] = y_2_hat[i-1::59,0] 
-
-            if config.USE_ADDITIONAL_INPUT:
-                y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
-            else:
-                y_hat_i = rnn_model.predict(feature, batch_size = 1)
-                
-        # TODO: Erweitern fuer recurrent timesteps > 2!!!
-        else: # (t > 2):
-            feature = X_test[i::59, :, :]
-            # Use previous predictions of ADDITIONAL_INPUT as input for both input vectors
-            feature[:,0,-1] = y_2_hat[i-2::59, 0] 
-            feature[:,1,-1] = y_2_hat[i-1::59, 0]
-            if config.USE_ADDITIONAL_INPUT:
-                y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = 1)
-            else:
-                y_hat_i = rnn_model.predict(feature, batch_size = 1)
+        # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
+        y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = config.BATCH_SIZE)
 
         y_hat[i::59] = y_hat_i
         if config.USE_ADDITIONAL_INPUT:
@@ -148,8 +130,8 @@ def calculate_loss_per_timestep(targets, predictions, timesteps = 59, loss_metri
         loss.append(loss_i)
             
     # Check:
-    total_loss = np.mean(loss)
-    print('total_loss (per timestep): ', total_loss)
+    # total_loss = np.mean(loss)
+    # print('total_loss (per timestep): ', total_loss)
     loss = np.array(loss)
     return loss
 
@@ -207,27 +189,71 @@ def calculate_loss_per_scenario(targets, predictions, timesteps = 59, loss_metri
 
     loss = np.array(loss)
     # Check:
-    total_loss = np.mean(loss)
-    print('total_loss (per scenario): ', total_loss)
+    # total_loss = np.mean(loss)
+    # print('total_loss (per scenario): ', total_loss)
     return loss
 
 # TODO: Implement function that calculates the stochastic PVFP as:
 #               stoch. PVFP = mean of PVFP_s
 #       where s are the scenarios.
-def calculate_pvfp(net_profits):
+def calculate_pvfp(net_profits, discount_functions, scenario):
     """
     Calculates the PVFP for a specific scenario using the formula
         PVFP = sum_t d(t) * net_profit(t)
     """
 
+    net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
+
+    # Get net profits for specified scenario
+    net_profits_s = net_profits[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
     # Get discount function from inputs
+    discount_function_s = discount_functions[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
 
     # calculate PVFP
-    return 0
+    if (not config.use_discounted_np):
+        return np.dot(net_profits_s, discount_function_s)
+    else: # if net profits are already discounted, there is no need to multiplicate with discount vector
+        return np.sum(net_profits_s)
 
-def calculate_stochastic_pvfp(predictions):
+def calculate_stochastic_pvfp(net_profits, discount_functions):
+
+    net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
+
+    number_scenarios = int(net_profits.size / config.PROJECTION_TIME)
     
-    scenarios = []
-    pvfps = [calculate_pvfp(net_profits) for net_profits in scenarios]
+    pvfps = [calculate_pvfp(net_profits, discount_functions, scenario) for scenario in range(number_scenarios)]
 
-    return np.mean(pvfps)
+    return np.mean(np.array(pvfps))
+
+# Alternative (Check if correct!)
+def calculate_stoch_pvfp(net_profits, discount_functions):
+
+    number_scenarios = net_profits.size / config.PROJECTION_TIME
+
+    if not config.use_discounted_np:
+        net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
+
+        pvfps = np.dot(net_profits, discount_functions)
+
+        return pvfps / number_scenarios
+
+    else: 
+        return np.sum(net_profits) / number_scenarios
+
+def create_discount_vector(spot_rates, scenario):
+    """
+    Calculates the discount vector based on the zero-coupon prices for a specific scenario:
+        discount_vector[0] = 1.0
+        discount_vector[t] = discount_vector[t-1] * zcb_prices[t-1]
+    """
+    discount_vector = np.zeros(config.PROJECTION_TIME)
+
+    for t in range(config.PROJECTION_TIME):
+        if t == 0:
+            discount_vector[t] = 1.0
+        else:
+            # Convert spot rate to zcb price
+            zcb_price = 1 / (1 + spot_rates[config.PROJECTION_TIME*scenario + t - 1])
+            discount_vector[t] = discount_vector[t-1] * zcb_price
+
+    return discount_vector

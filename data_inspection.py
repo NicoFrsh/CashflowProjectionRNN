@@ -13,10 +13,10 @@ import data_postprocessing
 
 # Read inputs
 if config.USE_ADDITIONAL_INPUT:
-    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
+    X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 else:
-    X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 
 labels = scaler_output.inverse_transform(y_train)

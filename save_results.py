@@ -13,11 +13,11 @@ model_path = config.MODEL_PATH + '/model.h5'
 
 # Create training and test data
 if config.USE_ADDITIONAL_INPUT:
-    X_train, y_train, y_2_train, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
 else:
-    X_train, y_train, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
 
 # Input shape = (timesteps, # features)
 input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
