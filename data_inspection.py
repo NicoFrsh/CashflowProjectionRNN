@@ -17,7 +17,8 @@ if config.USE_ADDITIONAL_INPUT:
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
 else:
     X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, projection_time=config.PROJECTION_TIME,
+    recurrent_timesteps= config.TIMESTEPS, shuffle_data=True)
 
 labels = scaler_output.inverse_transform(y_train)
 print('first label: ')

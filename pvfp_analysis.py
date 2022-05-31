@@ -15,17 +15,18 @@ input = pd.read_csv(config.PATH_SCENARIO, skiprows=6)
 
 # Remove timestep 60 as the outputs only go to 59
 input = input[input['Zeit'] != config.PROJECTION_TIME + 1]
-input = input[input['Zeit'] != config.PROJECTION_TIME + 2]
 input = input[input['Zeit'] != 0]
 discount_functions = input.loc[:,'Diskontfunktion']
 
 # Get discount functions for test and training data
 discount_functions = np.array(discount_functions)
 test_ratio = (1 - config.TRAIN_RATIO) / 2
-idx = (config.TRAIN_RATIO + test_ratio) * (len(discount_functions)/config.PROJECTION_TIME)
-idx = int(idx) * config.PROJECTION_TIME
-discount_functions_train = discount_functions[:idx]
-discount_functions = discount_functions[idx:]
+idx_test_start = (config.TRAIN_RATIO + test_ratio) * (len(discount_functions)/config.PROJECTION_TIME)
+idx_test_start = int(idx_test_start) * config.PROJECTION_TIME
+idx_train_end = config.TRAIN_RATIO * (len(discount_functions)/config.PROJECTION_TIME)
+idx_train_end = int(idx_train_end) * config.PROJECTION_TIME
+discount_functions_train = discount_functions[:idx_train_end]
+discount_functions = discount_functions[idx_test_start:]
 
 # Load predictions and targets
 filepath = config.MODEL_PATH + '/data.pickle'
@@ -35,11 +36,14 @@ if (os.path.exists(filepath)):
         data = pickle.load(f)
 
 # Get test predictions and targets (original scale)
-net_profits_pred = data[2]
-net_profits_target = data[3]
-# Get train predictions and targets (scaled)
+net_profits_pred = data[0]
+net_profits_target = data[1]
+# Get train predictions and targets (original scale)
 net_profits_pred_train = data[4]
 net_profits_target_train = data[5]
+
+print('net_profits shape: ', net_profits_pred_train.shape)
+print('net_profits_target shape: ', net_profits_target_train.shape)
 
 # Calculate PVFP
 # 1. version
@@ -67,6 +71,14 @@ print('------ Train Data ------')
 print('PVFP prediction: ', pvfp_pred_train)
 print('PVFP target: ', pvfp_target_train)
 print('Difference: ', abs(pvfp_target_train - pvfp_pred_train)) 
+
+# 2. version
+# pvfp_pred_train = calculate_stoch_pvfp(net_profits_pred_train, discount_functions_train)
+# pvfp_target_train = calculate_stoch_pvfp(net_profits_target_train, discount_functions_train)
+
+# print('PVFP prediction: ', pvfp_pred_train)
+# print('PVFP target: ', pvfp_target_train)
+# print('Difference: ', abs(pvfp_target_train - pvfp_pred_train))
 
 # Compute PVFP for each scenario and compare distributions (wie Akho) using test set
 number_scenarios = int(net_profits_pred.size / config.PROJECTION_TIME)

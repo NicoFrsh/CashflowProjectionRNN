@@ -2,8 +2,6 @@
 import os
 from distutils.command.config import config
 import pickle
-from turtle import position
-from typing import IO
 import numpy as np
 import matplotlib.pyplot as plt
 import config
@@ -31,7 +29,6 @@ print('val_mse: ', np.min(history['val_loss']))
 if config.USE_ADDITIONAL_INPUT:
     index = np.argmin(history['val_loss'])
     val_mae = 0.5 * history['val_net_profit_head_mae'][index] + 0.5 * history['val_additional_input_head_mae'][index]
-    # val_mae =  index WHERE val_loss = min --> 0.5 * val_net_profit_head_mae[index] + 0.5 val_additional_input_head_mae[index] 
     print('val_mse_net_profit: ', history['val_net_profit_head_loss'][index])
     print('val_mae_net_profit: ', history['val_net_profit_head_mae'][index])
 else:
@@ -58,12 +55,10 @@ indices = np.where(y_original == 0)[0]
 # Compare to predictions at those indices
 pred_test_zero = pred_test_original[indices]
 print('pred_zero: ', pred_test_zero[:6])
-# modulo = [59 for i in indices]
-# modulo = np.array(modulo)
-indices = np.mod(indices, 59)
+indices = np.mod(indices, config.PROJECTION_TIME)
 
 plt.figure(20)
-plt.hist(indices, bins = 59)
+plt.hist(indices, bins = config.PROJECTION_TIME)
 plt.xlabel('Timestep')
 plt.ylabel('Frequency')
 plt.title('Histogram of zeros-entries')
@@ -71,7 +66,7 @@ plt.title('Histogram of zeros-entries')
 # Plot MSE for each timestep. Should be higher in first 10 years.
 mse_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test)
 mae_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test, loss_metric='mae')
-x_time = range(1,60)
+x_time = range(1,config.PROJECTION_TIME+1)
 x_scen = range(int(len(y) / config.PROJECTION_TIME))
 
 print('length y_test: ', len(y))
@@ -132,7 +127,7 @@ res_original = y_original - pred_test_original
 plt.figure(2)
 plt.hist(res_original, bins='auto', range=(-100000000,100000000))
 plt.title('Histogram of residuals (original scale)')
-plt.savefig(os.path.dirname(filepath) + '/hist_res_original.eps')
+plt.savefig(os.path.dirname(filepath) + '/hist_res_original.pdf')
 
 print('Mean of residuals: ', np.mean(res_original))
 print('Min: ', np.min(res_original), ' Max: ', np.max(res_original))
@@ -143,7 +138,7 @@ print('Range of predictions: ', np.min(pred_test_original), ' - ', np.max(pred_t
 predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(pred_test_original, config.PROJECTION_TIME)
 observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_original, config.PROJECTION_TIME)
 
-x = range(1,60)
+x = range(1,config.PROJECTION_TIME+1)
 plt.figure(3)
 plt.plot(x, predictions_np_mean, '.', label = 'Predictions')
 plt.plot(x, observations_np_mean, 'x', label = 'Observations')
@@ -161,18 +156,19 @@ plt.title('Boxplot of residuals')
 
 # Distribution of predictions vs. targets
 plt.figure(5)
-plt.hist(y_original, bins=1000, range=(-20000000,100000000), alpha = 0.7, label='Observations')
-plt.hist(pred_test_original, bins=1000, range=(-20000000,100000000), alpha= 0.7, label='Predictions')
+plt.hist(y_original, bins=1000, range=(-0.2*1e8,0.9*1e8), alpha = 0.7, label='Observations')
+plt.hist(pred_test_original, bins=1000, range=(-0.2*1e8,0.9*1e8), alpha= 0.7, label='Predictions')
 plt.legend()
-plt.title('Distribution y_target vs. y_pred')
+plt.title('Distribution y_target vs. y_pred (original scale)')
 
 # Distribution of predictions vs. targets
 if len(data) > 4:
     plt.figure(6)
-    plt.hist(y_train, bins='auto', range=(0.8,1), alpha = 0.7, label='Observations')
-    plt.hist(pred_train, bins='auto', range=(0.8,1), alpha = 0.7, label='Predictions')
+    plt.hist(y_train, bins='auto', range=(0.9,1), alpha = 0.7, label='Observations')
+    plt.hist(pred_train, bins='auto', range=(0.9,1), alpha = 0.7, label='Predictions')
     plt.legend()
-    plt.title('Distribution y_train vs. pred_train')
+    plt.ylim(top = 10000)
+    plt.title('Distribution y_train vs. pred_train (scaled)')
     plt.savefig(os.path.dirname(filepath) + '/distribution.pdf')
 
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score, explained_variance_score

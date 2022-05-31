@@ -14,12 +14,12 @@ def recursive_prediction_old(X_test, rnn_model):
 
     for i in range(100):
 
-        if i % 59 == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
+        if i % config.PROJECTION_TIME == 0: # (t = 1): Take actual net profit from timestep 0 for both input vectors (padding!)
             # Predict for timestep 1
             # y_hat_i = rnn_model.predict(np.reshape(X_test[i,:,:], (-1,2,num_features)))
             y_hat_i = rnn_model(np.reshape(X_test[i,:,:], (-1,2,num_features)))
 
-        elif i % 59 == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
+        elif i % config.PROJECTION_TIME == 1: # (i.e. t = 2): Take actual net profit from timestep 0 for the first input vector
             feature = X_test[i,:,:] # Keep net profit
             feature[1,-1] = y_hat[i-1] # Replace net profit with predicted net profit
             print('FEATURE (t=2):')
@@ -64,14 +64,14 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTE
         feature = X_test[i::projection_time, :, :]
         for j in range(1, t_rec + 1):
             # Replace additional input with predictions of additional input
-            feature[:,-j,-1] = y_2_hat[i-j::59,0]
+            feature[:,-j,-1] = y_2_hat[i-j::projection_time,0]
 
         # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
         y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = config.BATCH_SIZE)
 
-        y_hat[i::59] = y_hat_i
+        y_hat[i::projection_time] = y_hat_i
         if config.USE_ADDITIONAL_INPUT:
-            y_2_hat[i::59] = y_2_hat_i
+            y_2_hat[i::projection_time] = y_2_hat_i
 
     if config.USE_ADDITIONAL_INPUT:
         return y_hat, y_2_hat
@@ -100,7 +100,7 @@ def calculate_mean_per_timestep(outputs, timesteps):
 
     return np.array(mean_outputs)
 
-def calculate_loss_per_timestep(targets, predictions, timesteps = 59, loss_metric = 'mse'):
+def calculate_loss_per_timestep(targets, predictions, timesteps = config.PROJECTION_TIME, loss_metric = 'mse'):
     """ 
     Calculates the loss per timestep over all scenarios. You can choose between Mean-Squared-Error ('mse')
     and Mean-Absolute-Error ('mae') as loss metric.
@@ -158,7 +158,7 @@ def calculate_mean_per_scenario(outputs, timesteps):
 
     return mean_outputs
 
-def calculate_loss_per_scenario(targets, predictions, timesteps = 59, loss_metric = 'mse'):
+def calculate_loss_per_scenario(targets, predictions, timesteps = config.PROJECTION_TIME, loss_metric = 'mse'):
     """
     Calculates the mean-squared-error per scenario over all timesteps. You can choose between Mean-Squared-Error ('mse')
     and Mean-Absolute-Error ('mae') as loss metric.

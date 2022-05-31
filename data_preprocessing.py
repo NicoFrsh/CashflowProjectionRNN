@@ -3,13 +3,14 @@ from audioop import add
 from distutils.log import error
 import pandas as pd
 import numpy as np
+import random
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import config
 
 def prepare_data(scenario_path, outputs_path, output_variable, projection_time = config.PROJECTION_TIME, 
-                recurrent_timesteps = config.TIMESTEPS, shuffle_data = False, train_ratio = config.TRAIN_RATIO):
+                recurrent_timesteps = config.TIMESTEPS, shuffle_data = config.SHUFFLE, train_ratio = config.TRAIN_RATIO):
     """
     Prepares data and gets it ready to serve as input to LSTM-Neural-Network.
     Parameters:
@@ -21,20 +22,29 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         - train_ratio: ratio of how much of the data is used as training data
     """
 
+    np.random.seed(config.RANDOM_SEED)
+
     input = pd.read_csv(scenario_path, skiprows=6)
     output = pd.read_csv(outputs_path)
 
     # Preprocess data
     additional_input = output[output['Variable'] == config.ADDITIONAL_INPUT]
     output = output[output['Variable'] == output_variable]
-    output = output.iloc[:, 0:62]
-    additional_input = additional_input.iloc[:, 0:62]
+    output = output.iloc[:, 0:projection_time+3]
+    additional_input = additional_input.iloc[:, 0:projection_time+3]
     # Remove 'Variable' column
     output = output.drop(columns=['Variable'])
     additional_input = additional_input.drop(columns=['Variable'])
     # Rename column
     output = output.rename(columns={'Simulation':'Pfad'})
     additional_input = additional_input.rename(columns={'Simulation':'Pfad'})
+
+    # Remove timestep 60 as the outputs only go to 59
+    input = input[input['Zeit'] != projection_time + 1]
+
+    # Filter parameters
+    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
+    input = input.loc[:, parameters]    
 
     # Change format of dataframe to long table
     output = pd.melt(output, id_vars=['Pfad'], var_name='Zeit')
@@ -60,21 +70,12 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     additional_input = add_padding_to_additional_input(additional_input)
     print('add_input after padding: ', additional_input.size)
 
-    # Remove timestep 60 as the outputs only go to 59
-    # TODO: dynamisch, bzw. 10k lauf nochmal machen wo es wirklich bis t=60 geht
-    input = input[input['Zeit'] != projection_time + 1]
-    input = input[input['Zeit'] != projection_time + 2]
-
-    # Filter parameters
-    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
-    input = input.loc[:, parameters]    
-
     # Convert output to discounted output using the discount function of the scenario file
     if config.use_discounted_np:
 
         discount_function = input.loc[:, 'Diskontfunktion']
         discount_function = discount_function.to_numpy()
-        output = output * discount_function    
+        output = output * discount_function
 
 
     # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
@@ -88,36 +89,17 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         yearly_inputs = yearly_inputs.to_numpy()
         input = input.to_numpy()
 
-        # x_axis = np.array(range(60))
-        # plt.figure(0)
-        # plt.plot(x_axis, yearly_inputs[:60, 0], label = 'Diskontfunktion')
-        # plt.plot(x_axis, yearly_inputs[:60, 1], label = 'Aktien')
-        # plt.plot(x_axis, yearly_inputs[:60, 2], label = 'Immobilien')
-        # plt.title('Accumulated inputs')
-        # plt.legend()
-
         for i in reversed(range(len(yearly_inputs))): 
             
-            if i % 60 == 0:
+            if i % (projection_time+1) == 0:
                 yearly_inputs[i,:] = 0
-            else: # Value at t = 0 is always 1 OR 0???
+            else: # Value at t = 0 is always 0
                 yearly_inputs[i,:] = (yearly_inputs[i,:] / yearly_inputs[i-1,:]) - 1
-
-        # plt.figure(1)
-        # plt.plot(x_axis, yearly_inputs[:60, 0], label = 'Diskontfunktion')
-        # plt.plot(x_axis, yearly_inputs[:60, 1], label = 'Aktien')
-        # plt.plot(x_axis, yearly_inputs[:60, 2], label = 'Immobilien')
-        # plt.title('Yearly inputs')
-        # plt.legend()
-        # plt.show()
 
         scaler_yearly_inputs = MinMaxScaler(feature_range=(0,1))
         yearly_inputs = scaler_yearly_inputs.fit_transform(yearly_inputs)
         scaler_input = MinMaxScaler(feature_range=(0,1))
         input = scaler_input.fit_transform(input)
-
-        # Insert into input dataframe
-        # input[['Diskontfunktion','Aktien','Immobilien']] = yearly_inputs  
 
         input = np.concatenate((input, yearly_inputs), axis=1)
   
@@ -191,13 +173,32 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     print('labels shape: ', labels.shape)
     print('add_labels shape: ', additional_labels.shape)
 
+    # TODO: Add shuffled split!
+    if shuffle_data:
+
+        features_batches, labels_batches = [],[]
+        number_scenarios = int(labels.shape[0] / projection_time)
+
+        for s in range(number_scenarios):
+            features_batches.append(features[s*projection_time : (s+1)*projection_time,:,:])
+            labels_batches.append(labels[s*projection_time : (s+1)*projection_time, : ]) 
+
+        # Shuffle batch-wise, so that features and labels remain aligned
+        # features = np.random.permutation(features_batches)
+        # labels = np.random.permutation(labels_batches)
+        features, labels = shuffle(features_batches, labels_batches, random_state=config.RANDOM_SEED)
+        features, labels = np.array(features), np.array(labels)
+
+        # Reshape arrays
+        features = features.reshape(-1, recurrent_timesteps + 1, features.shape[-1])
+        labels = labels.reshape(-1, 1)
 
 
     # TODO: Stratified shuffle: In Trainings- und Testdaten muessen repraesentativ fuer Datensatz sein.
     #       D.h. vor allem im Testset sollten 20% (bei train_ratio = 0.8) aller Scenarien zu allen Zeitschritten
     #       (1-59) enthalten sein.
-    if shuffle_data == True:
-        features, labels, additional_labels = shuffle(features, labels, additional_labels, random_state=config.RANDOM_SEED)
+    # if shuffle_data == True:
+    #     features, labels, additional_labels = shuffle(features, labels, additional_labels, random_state=config.RANDOM_SEED)
         
 
     # Split into train, validation and test sets
@@ -218,7 +219,6 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
     Here, it is crucial that the split point is not in the middle of a scenario but exactly between two scenarios.
     """
 
-    # TODO: Add shuffled split!
     total_scenarios = len(labels) / projection_time
 
     train_scenarios_end = int(total_scenarios * train_ratio)
@@ -229,13 +229,10 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
 
     X_train = features[:idx_train_end,:,:]
     y_train = labels[:idx_train_end,:]
-    print('len(y_train): ', len(y_train))
     X_val = features[idx_train_end:idx_val_end,:,:]
     y_val = labels[idx_train_end:idx_val_end,:]
-    print('len(y_val): ', len(y_val))
     X_test = features[idx_val_end:,:,:]
     y_test = labels[idx_val_end:,:]
-    print('len(y_test): ', len(y_test))
 
 
     if config.USE_ADDITIONAL_INPUT:
