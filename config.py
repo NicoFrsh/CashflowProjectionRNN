@@ -1,7 +1,7 @@
 # Configuration parameters
 
 RANDOM_SEED = 1
-SHUFFLE = True
+SHUFFLE = False
 
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_60_10k.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/output_60_10k.csv'

@@ -70,6 +70,11 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     additional_input = add_padding_to_additional_input(additional_input)
     print('add_input after padding: ', additional_input.size)
 
+
+    # TODO: Adjust discount function column
+    discount_vector = generate_discount_vector(input)
+    input['Diskontfunktion'] = discount_vector
+
     # Convert output to discounted output using the discount function of the scenario file
     if config.use_discounted_np:
 
@@ -275,3 +280,18 @@ def add_padding_to_input(input, timesteps = config.TIMESTEPS, projection_time = 
         input = np.insert(input, indices[:-1], input[indices[:-1],:], axis=0)
 
     return input
+
+def generate_discount_vector(input_df):
+
+    spot_rates = input_df.loc[:,'1']
+    spot_rates = spot_rates.to_numpy()
+    discount_vector = np.ones(len(input_df))
+
+    for i in range(len(input_df)):
+
+        if i % (config.PROJECTION_TIME+1) != 0:
+            # print('input_df entry: ', spot_rates[i-1])
+            discount_vector[i] = discount_vector[i-1] * (1 / (1 + spot_rates[i-1]))
+
+    return discount_vector
+
