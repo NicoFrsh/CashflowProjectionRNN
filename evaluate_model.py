@@ -117,7 +117,6 @@ plt.savefig(os.path.dirname(filepath) + '/parity_original.pdf')
 
 
 # Compute residuals
-# TODO: Use original scale to obtain better interpretability
 res = y - pred_test
 plt.figure(1)
 plt.hist(res, bins='auto', range=(-0.03,0.03))
@@ -173,6 +172,7 @@ if len(data) > 4:
 
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score, explained_variance_score
 
+print('Some metrics for the Test Data:')
 # MSE
 mse = mean_squared_error(y, pred_test)
 print('MSE = ', mse)
@@ -185,8 +185,8 @@ mae = mean_absolute_error(y, pred_test)
 print('MAE = ', mae)
 
 # Compute Mean Absolute Percentage Error (MAPE)
-sk_mape = mean_absolute_percentage_error(y, pred_test) * 100
-print('MAPE: ', sk_mape)
+# sk_mape = mean_absolute_percentage_error(y, pred_test) * 100
+# print('MAPE: ', sk_mape)
 mape = np.mean(np.abs((y - pred_test) / y)) * 100
 print('MAPE = ', mape)
 
@@ -194,8 +194,8 @@ print('MAPE = ', mape)
 smape = np.mean((np.abs(y - pred_test)) / ((np.abs(y) + np.abs(pred_test)) / 2)) * 100
 print('SMAPE = ', smape)
 
-smape_2 = np.mean((np.abs(y - pred_test)) / (np.abs(y) + np.abs(pred_test))) * 100
-print('adj. SMAPE = ', smape_2)
+# smape_2 = np.mean((np.abs(y - pred_test)) / (np.abs(y) + np.abs(pred_test))) * 100
+# print('adj. SMAPE = ', smape_2)
 
 # Mean Absolute Scaled Error (MASE)
 
@@ -206,16 +206,16 @@ print('adj. SMAPE = ', smape_2)
 # print('log acc. = ', log_acc)
 
 # MRAE 
-y_shifted = np.roll(y,1)
-y_shifted[0] = 0
-mrae = np.mean(np.abs((y - pred_test) / (y - y_shifted))) * 100
-print('MRAE = ', mrae)
+# y_shifted = np.roll(y,1)
+# y_shifted[0] = 0
+# mrae = np.mean(np.abs((y - pred_test) / (y - y_shifted))) * 100
+# print('MRAE = ', mrae)
 
 # R-squared
 score = r2_score(y, pred_test)
 print('R-squared: ', score)
 
-explained_variance = explained_variance_score(y, pred_test)
-print('Explained variance score: ', explained_variance)
+# explained_variance = explained_variance_score(y, pred_test)
+# print('Explained variance score: ', explained_variance)
 
 plt.show()

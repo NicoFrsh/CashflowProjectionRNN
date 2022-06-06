@@ -193,29 +193,32 @@ def calculate_loss_per_scenario(targets, predictions, timesteps = config.PROJECT
     # print('total_loss (per scenario): ', total_loss)
     return loss
 
-# TODO: Implement function that calculates the stochastic PVFP as:
+# Function that calculates the stochastic PVFP as:
 #               stoch. PVFP = mean of PVFP_s
 #       where s are the scenarios.
-def calculate_pvfp(net_profits, discount_functions, scenario):
+def calculate_pvfp(net_profits, scenario, discount_functions = None):
     """
     Calculates the PVFP for a specific scenario using the formula
         PVFP = sum_t d(t) * net_profit(t)
     """
 
-    net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
+    if config.use_discounted_np:
+        net_profits = np.array(net_profits).reshape((-1,))
+         # Get net profits for specified scenario
+        net_profits_s = net_profits[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
 
-    # Get net profits for specified scenario
-    net_profits_s = net_profits[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
-    # Get discount function from inputs
-    discount_function_s = discount_functions[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
-
-    # calculate PVFP
-    if (not config.use_discounted_np):
-        return np.dot(net_profits_s, discount_function_s)
-    else: # if net profits are already discounted, there is no need to multiplicate with discount vector
         return np.sum(net_profits_s)
 
-def calculate_stochastic_pvfp(net_profits, discount_functions):
+    else:
+        net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
+        # Get net profits for specified scenario
+        net_profits_s = net_profits[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
+        # Get discount function from inputs
+        discount_function_s = discount_functions[scenario*config.PROJECTION_TIME : (scenario+1)*config.PROJECTION_TIME]
+
+        return np.dot(net_profits_s, discount_function_s)
+
+def calculate_stochastic_pvfp(net_profits, discount_functions = None):
 
     net_profits, discount_functions = np.array(net_profits).reshape((-1,)), np.array(discount_functions).reshape((-1,))
 
@@ -226,7 +229,7 @@ def calculate_stochastic_pvfp(net_profits, discount_functions):
     return np.mean(np.array(pvfps))
 
 # Alternative (Check if correct!)
-def calculate_stoch_pvfp(net_profits, discount_functions):
+def calculate_stoch_pvfp(net_profits, discount_functions = None):
 
     number_scenarios = net_profits.size / config.PROJECTION_TIME
 

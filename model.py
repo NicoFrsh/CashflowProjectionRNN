@@ -80,7 +80,7 @@ class RNN_Model:
       # TODO: Implement!
       return 0
 
-def build_model(model_type, use_additional_input, learning_rate, input_shape, recurrent_layers, recurrent_cells, 
+def build_model(model_type, use_additional_input, learning_rate, input_shape, recurrent_layers, recurrent_cells,
                recurrent_activation, output_activation, additional_output_activation, average_label, average_label_2 = None):
    # Parameters:
    #     - model_type (string):                 'simple_rnn', 'lstm' or 'gru'
@@ -93,36 +93,38 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
 
    current_output = input
 
-   recurrent_dropout = 0.0
-   if recurrent_cells > 32:
-      recurrent_dropout = 0.1
+   dropout = 0.0
+   # if use_dropout:
+   #    dropout = 0.1
 
    if recurrent_layers > 1:
       for i in range(recurrent_layers - 1):
 
          if model_type == 'simple_rnn':
-            current_output = SimpleRNN(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, recurrent_dropout=recurrent_dropout)(current_output)
+            current_output = SimpleRNN(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
          
          elif model_type == 'lstm':
-            current_output = LSTM(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, recurrent_dropout=recurrent_dropout)(current_output)
+            current_output = LSTM(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
 
          elif model_type == 'gru':
-            current_output = GRU(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, recurrent_dropout=recurrent_dropout)(current_output)
+            current_output = GRU(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
 
    if model_type == 'simple_rnn':
-      current_output = SimpleRNN(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation)(current_output)
+      current_output = SimpleRNN(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation, dropout=dropout)(current_output)
    
    elif model_type == 'lstm':
-      current_output = LSTM(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation)(current_output)
+      current_output = LSTM(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation, dropout=dropout)(current_output)
 
    elif model_type == 'gru':
-      current_output = GRU(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation)(current_output)
+      current_output = GRU(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation, dropout=dropout)(current_output)
 
    # Add Batch Normalization
    # current_output = BatchNormalization()(current_output)
 
    # Add Dropout Layer (performs worse)
-   # current_output = Dropout(0.2)(current_output)
+   # current_output = Dropout(dropout)(current_output)
+
+   # TODO: Ausprobieren: Zusaetzlicher Dense Layer mit mehr Neuronen und vielleicht ReLu vor Output Dense Layer
 
    net_profit_head = Dense(1, activation=output_activation, bias_initializer=keras.initializers.Constant(average_label),
    name = 'net_profit_head')(current_output)
@@ -137,8 +139,10 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
       model = keras.Model(inputs = input, outputs = net_profit_head)
 
    if use_additional_input:
-      model.compile(optimizer='adam', loss={'net_profit_head':'mse','additional_input_head':'mse'}, metrics={'net_profit_head':'mae','additional_input_head':'mae'},
+      model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss={'net_profit_head':'mse','additional_input_head':'mse'}, metrics={'net_profit_head':'mae','additional_input_head':'mae'},
       loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
+      # model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=learning_rate), loss={'net_profit_head':'mse','additional_input_head':'mse'}, metrics={'net_profit_head':'mae','additional_input_head':'mae'},
+      # loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
    else:
       model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse', metrics=['mae'])
       # model.compile(optimizer='adam', loss='mse', metrics=['mae'])

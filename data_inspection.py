@@ -20,6 +20,8 @@ else:
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, projection_time=config.PROJECTION_TIME,
     recurrent_timesteps= config.TIMESTEPS, shuffle_data=config.SHUFFLE)
 
+print('X_train shape: ', X_train.shape)
+
 labels = scaler_output.inverse_transform(y_train)
 print('first label: ')
 print(labels[0])

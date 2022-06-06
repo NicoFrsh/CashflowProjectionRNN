@@ -1,16 +1,13 @@
 # Data preprocessing
-from audioop import add
-from distutils.log import error
 import pandas as pd
 import numpy as np
-import random
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import shuffle
-import matplotlib.pyplot as plt
 import config
 
 def prepare_data(scenario_path, outputs_path, output_variable, projection_time = config.PROJECTION_TIME, 
-                recurrent_timesteps = config.TIMESTEPS, shuffle_data = config.SHUFFLE, train_ratio = config.TRAIN_RATIO):
+                recurrent_timesteps = config.TIMESTEPS, output_activation = config.OUTPUT_ACTIVATION, 
+                additional_output_activation = config.ADDITIONAL_OUTPUT_ACTIVATION, shuffle_data = config.SHUFFLE, train_ratio = config.TRAIN_RATIO):
     """
     Prepares data and gets it ready to serve as input to LSTM-Neural-Network.
     Parameters:
@@ -22,6 +19,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         - train_ratio: ratio of how much of the data is used as training data
     """
 
+    # np.random.seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
 
     input = pd.read_csv(scenario_path, skiprows=6)
@@ -39,12 +37,13 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     output = output.rename(columns={'Simulation':'Pfad'})
     additional_input = additional_input.rename(columns={'Simulation':'Pfad'})
 
-    # Remove timestep 60 as the outputs only go to 59
+    # Remove timestep 61 as the outputs only go to 60
     input = input[input['Zeit'] != projection_time + 1]
+    input = input[input['Zeit'] != projection_time + 2]
 
     # Filter parameters
     parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
-    input = input.loc[:, parameters]    
+    input = input.loc[:, parameters]
 
     # Change format of dataframe to long table
     output = pd.melt(output, id_vars=['Pfad'], var_name='Zeit')
@@ -65,13 +64,11 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     indices = np.arange(0, additional_input.size + 1, projection_time + 1)
     # Remove last entry of each scenario (which will not be used to predict the last net profit)
     additional_input = np.delete(additional_input, indices[1:]-1)
-    print('add_input before padding: ', additional_input.size)
     # Add padding for first entry (= 0 for all scenarios) (based on config.TIMESTEPS)
-    additional_input = add_padding_to_additional_input(additional_input)
-    print('add_input after padding: ', additional_input.size)
+    additional_input = add_padding_to_additional_input(additional_input, recurrent_timesteps, projection_time)
 
 
-    # TODO: Adjust discount function column
+    # Adjust discount function column
     discount_vector = generate_discount_vector(input)
     input['Diskontfunktion'] = discount_vector
 
@@ -81,11 +78,11 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         discount_function = input.loc[:, 'Diskontfunktion']
         discount_function = discount_function.to_numpy()
         output = output * discount_function
+        #TODO: Additional output auch diskontieren!!!!
 
 
     # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
     # x_t = (x_t / x_{t-1}) - 1
-    # TODO: Testen: Yearly inputs auf (-1,1) skalierung, rest auf (0,1) --> Dann tanh aktivierung fuer additional output
     if config.use_yearly_inputs:
 
         # Separate yearly and accumulated inputs
@@ -113,22 +110,20 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         scaler_input = MinMaxScaler()
         input = scaler_input.fit_transform(input)
 
-    print('len(input) before padding: ', input.shape[0])
 
     # Add padding to input
     if recurrent_timesteps > 1:
-        input = add_padding_to_input(input)
+        input = add_padding_to_input(input, recurrent_timesteps, projection_time)
 
-    print('len(input) after padding: ', input.shape[0])
     print('shape of input: ', input.shape)
 
     # TODO: Erst Train-Test-Split und dann MinMaxScaler!
 
     if config.USE_ADDITIONAL_INPUT:
-        if (config.ADDITIONAL_OUTPUT_ACTIVATION == 'sigmoid' or config.ADDITIONAL_OUTPUT_ACTIVATION == 'relu'):
+        if (additional_output_activation == 'sigmoid' or additional_output_activation == 'relu'):
             # Scale additional input/output to (0,1) to be conform with the sigmoid activation function whos value lie in (0,1)
             scaler_additional_output = MinMaxScaler()
-        elif (config.ADDITIONAL_OUTPUT_ACTIVATION == 'tanh' or config.ADDITIONAL_OUTPUT_ACTIVATION == 'linear'):
+        elif (additional_output_activation == 'tanh' or additional_output_activation == 'linear'):
             # Scale additional inputs to (-1,1) to be conform with the tanh activation function whos value lie in (-1,1)
             scaler_additional_output = MinMaxScaler(feature_range=(-1,1))
 
@@ -138,10 +133,10 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         # Concatenate inputs and additional inputs
         input = np.concatenate( (input, additional_input), axis=1 )
 
-    if (config.OUTPUT_ACTIVATION == 'tanh' or config.OUTPUT_ACTIVATION == 'linear'):
+    if (output_activation == 'tanh' or output_activation == 'linear'):
         # Scale outputs to (-1,1)
         scaler_output = MinMaxScaler(feature_range = (-1,1))
-    elif (config.OUTPUT_ACTIVATION == 'sigmoid' or config.OUTPUT_ACTIVATION == 'relu'):
+    elif (output_activation == 'sigmoid' or output_activation == 'relu'):
         # Scale outputs to (0,1)
         scaler_output = MinMaxScaler()
 
@@ -178,32 +173,24 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     print('labels shape: ', labels.shape)
     print('add_labels shape: ', additional_labels.shape)
 
-    # TODO: Add shuffled split!
     if shuffle_data:
 
-        features_batches, labels_batches = [],[]
+        features_batches, labels_batches, additional_labels_batches = [],[],[]
         number_scenarios = int(labels.shape[0] / projection_time)
 
         for s in range(number_scenarios):
             features_batches.append(features[s*projection_time : (s+1)*projection_time,:,:])
             labels_batches.append(labels[s*projection_time : (s+1)*projection_time, : ]) 
+            additional_labels_batches.append(additional_labels[s*projection_time : (s+1)*projection_time, : ])
 
         # Shuffle batch-wise, so that features and labels remain aligned
-        # features = np.random.permutation(features_batches)
-        # labels = np.random.permutation(labels_batches)
-        features, labels = shuffle(features_batches, labels_batches, random_state=config.RANDOM_SEED)
-        features, labels = np.array(features), np.array(labels)
+        features, labels, additional_labels = shuffle(features_batches, labels_batches, additional_labels_batches, random_state=config.RANDOM_SEED)
+        features, labels, additional_labels = np.array(features), np.array(labels), np.array(additional_labels)
 
         # Reshape arrays
         features = features.reshape(-1, recurrent_timesteps + 1, features.shape[-1])
         labels = labels.reshape(-1, 1)
-
-
-    # TODO: Stratified shuffle: In Trainings- und Testdaten muessen repraesentativ fuer Datensatz sein.
-    #       D.h. vor allem im Testset sollten 20% (bei train_ratio = 0.8) aller Scenarien zu allen Zeitschritten
-    #       (1-59) enthalten sein.
-    # if shuffle_data == True:
-    #     features, labels, additional_labels = shuffle(features, labels, additional_labels, random_state=config.RANDOM_SEED)
+        additional_labels = additional_labels.reshape(-1,1)
         
 
     # Split into train, validation and test sets
@@ -250,7 +237,7 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
     else:
         return X_train, y_train, X_val, y_val, X_test, y_test
 
-def add_padding_to_additional_input(input, timesteps = config.TIMESTEPS, projection_time = config.PROJECTION_TIME):
+def add_padding_to_additional_input(input, timesteps, projection_time):
     """
     Padding for additional_input. To predict the net profit at timestep t the neural network needs additional_input at timesteps
     t-1, t-2, ..., t-(timesteps+1). So, e.g. to predict net profit at timestep 1, we need padding and use the additional_input at 
@@ -264,7 +251,7 @@ def add_padding_to_additional_input(input, timesteps = config.TIMESTEPS, project
 
     return input
 
-def add_padding_to_input(input, timesteps = config.TIMESTEPS, projection_time = config.PROJECTION_TIME):
+def add_padding_to_input(input, timesteps, projection_time):
     """
     Padding for regular input. To predict the net profit at timestep t the neural network needs inputs at timesteps
     t, t-1, ..., t-timesteps. So, e.g. to predict net profit at timestep 1, we need padding and use the inputs at 
