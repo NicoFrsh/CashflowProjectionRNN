@@ -1,7 +1,7 @@
 # Configuration parameters
 
 RANDOM_SEED = 123
-SHUFFLE = False
+SHUFFLE = True
 
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_60_10k.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/output_60_10k.csv'
@@ -23,7 +23,7 @@ RNN_ACTIVATION = 'tanh'
 # TODO: lineare Aktivierung ausprobieren!
 OUTPUT_ACTIVATION = 'tanh'
 # sigmoid am besten, da die Inputs alle positiv sind und dann die Skalierung auf (0,1) optimal ist.
-ADDITIONAL_OUTPUT_ACTIVATION = 'tanh'
+ADDITIONAL_OUTPUT_ACTIVATION = 'sigmoid'
 
 TRAIN_RATIO = 0.9
 EPOCHS = 500
@@ -37,7 +37,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_60_10k/new_{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:

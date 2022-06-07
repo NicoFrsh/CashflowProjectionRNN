@@ -96,9 +96,16 @@ plt.ylabel('MSE')
 plt.title('MSE over timesteps (Train Data)')
 
 # Parity plot
+if config.OUTPUT_ACTIVATION == 'tanh' or config.OUTPUT_ACTIVATION == 'linear':
+    axis_min, axis_max = -1, 1
+elif config.OUTPUT_ACTIVATION == 'sigmoid' or config.OUTPUT_ACTIVATION == 'relu':
+    axis_min, axis_max = 0, 1
+
 plt.figure(0)
 plt.scatter(y, pred_test, alpha=0.7)
-plt.plot([-1,1], [-1,1], 'k--')
+plt.plot([axis_min,axis_max], [axis_min,axis_max], 'k--')
+# plt.xlim((axis_min, axis_max))
+# plt.ylim((axis_min, axis_max))
 plt.xlabel('Observations')
 plt.ylabel('Predictions')
 plt.title('Parity Plot Test Data')

@@ -79,6 +79,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         discount_function = discount_function.to_numpy()
         output = output * discount_function
         #TODO: Additional output auch diskontieren!!!!
+        additional_output = additional_output * discount_function
 
 
     # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
