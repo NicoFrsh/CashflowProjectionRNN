@@ -17,7 +17,7 @@ LEARNING_RATE = 0.001
 
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
-BATCH_SIZE = 200
+BATCH_SIZE = 500
 # Note: All activations other than 'tanh' are slower, as CuDNN is only implemented for 'tanh'.
 RNN_ACTIVATION = 'tanh'
 # TODO: lineare Aktivierung ausprobieren!
@@ -37,7 +37,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/new_{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_60_10k/sigmoid_add_{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:
@@ -47,5 +47,7 @@ if use_yearly_inputs:
 if use_discounted_np:
     MODEL_PATH += 'discounted_'
 if RNN_ACTIVATION != 'tanh':
-    MODEL_PATH += RNN_ACTIVATION + '_' + OUTPUT_ACTIVATION + '_'
+    MODEL_PATH += RNN_ACTIVATION + '_'
+if OUTPUT_ACTIVATION != 'tanh':
+    MODEL_PATH += OUTPUT_ACTIVATION + '_'
 MODEL_PATH += 'T_{0}_bs_{1}_{2}_{3}'.format(TIMESTEPS, BATCH_SIZE, LSTM_LAYERS, LSTM_CELLS)

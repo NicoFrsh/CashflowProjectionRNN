@@ -60,13 +60,6 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     additional_input = additional_input['value'].to_numpy()
     # Create copy of additional_input for additional_input labels (no padding etc)
     additional_output = additional_input.copy()
-    # Duplicate first entry of additional_input for padding reasons (additional_input is shifted by 1 compared to scenario input!)
-    indices = np.arange(0, additional_input.size + 1, projection_time + 1)
-    # Remove last entry of each scenario (which will not be used to predict the last net profit)
-    additional_input = np.delete(additional_input, indices[1:]-1)
-    # Add padding for first entry (= 0 for all scenarios) (based on config.TIMESTEPS)
-    additional_input = add_padding_to_additional_input(additional_input, recurrent_timesteps, projection_time)
-
 
     # Adjust discount function column
     discount_vector = generate_discount_vector(input)
@@ -77,10 +70,16 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
 
         discount_function = input.loc[:, 'Diskontfunktion']
         discount_function = discount_function.to_numpy()
-        output = output * discount_function
-        #TODO: Additional output auch diskontieren!!!!
-        additional_output = additional_output * discount_function
+        output *= discount_function
+        additional_output *= discount_function
+        additional_input *= discount_function
 
+    # Duplicate first entry of additional_input for padding reasons (additional_input is shifted by 1 compared to scenario input!)
+    indices = np.arange(0, additional_input.size + 1, projection_time + 1)
+    # Remove last entry of each scenario (which will not be used to predict the last net profit)
+    additional_input = np.delete(additional_input, indices[1:]-1)
+    # Add padding for first entry (= 0 for all scenarios) (based on config.TIMESTEPS)
+    additional_input = add_padding_to_additional_input(additional_input, recurrent_timesteps, projection_time)
 
     # Convert Diskontfunktion, Aktien and Immobilien to yearly instead of accumulated values using the formula
     # x_t = (x_t / x_{t-1}) - 1
