@@ -27,8 +27,8 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     # Preprocess data
     additional_input = output[output['Variable'] == config.ADDITIONAL_INPUT]
     output = output[output['Variable'] == output_variable]
-    output = output.iloc[:, 0:62]
-    additional_input = additional_input.iloc[:, 0:62]
+    output = output.iloc[:, 0:projection_time+3]
+    additional_input = additional_input.iloc[:, 0:projection_time+3]
     # Remove 'Variable' column
     output = output.drop(columns=['Variable'])
     additional_input = additional_input.drop(columns=['Variable'])

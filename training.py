@@ -88,11 +88,11 @@ callbacks = [
 
 # Fit network
 if config.USE_ADDITIONAL_INPUT:
-    history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
-    validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
+    history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, #validation_split=0.2,
+    validation_data=(X_val, [y_val, y_2_val]), verbose=2, callbacks=callbacks, shuffle = True)
 
 else:
-    history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, validation_split=0.2,
+    history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, #validation_split=0.2,
     validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
 # Save history object with pickle

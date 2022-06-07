@@ -71,7 +71,7 @@ plt.title('Histogram of zeros-entries')
 # Plot MSE for each timestep. Should be higher in first 10 years.
 mse_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test)
 mae_over_timesteps = data_postprocessing.calculate_loss_per_timestep(y, pred_test, loss_metric='mae')
-x_time = range(1,60)
+x_time = range(1,config.PROJECTION_TIME+1)
 x_scen = range(int(len(y) / config.PROJECTION_TIME))
 
 print('length y_test: ', len(y))
@@ -143,7 +143,7 @@ print('Range of predictions: ', np.min(pred_test_original), ' - ', np.max(pred_t
 predictions_np_mean = data_postprocessing.calculate_mean_per_timestep(pred_test_original, config.PROJECTION_TIME)
 observations_np_mean = data_postprocessing.calculate_mean_per_timestep(y_original, config.PROJECTION_TIME)
 
-x = range(1,60)
+x = range(1,config.PROJECTION_TIME+1)
 plt.figure(3)
 plt.plot(x, predictions_np_mean, '.', label = 'Predictions')
 plt.plot(x, observations_np_mean, 'x', label = 'Observations')
