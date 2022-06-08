@@ -6,14 +6,14 @@ SHUFFLE = True
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_60_10k.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/output_60_10k.csv'
 OUTPUT_VARIABLE = 'net profit'
-USE_ADDITIONAL_INPUT = True
+USE_ADDITIONAL_INPUT = False
 ADDITIONAL_INPUT = 'gross surplus'
 
 PROJECTION_TIME = 60
-TIMESTEPS = 4
+TIMESTEPS = 2
 
 MODEL_TYPE = 'lstm'
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
@@ -37,7 +37,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/sigmoid_add_{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_60_10k/{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:

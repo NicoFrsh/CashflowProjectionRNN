@@ -1,7 +1,7 @@
 from keras.engine.base_layer import Layer
 from tensorflow import keras
 import tensorflow as tf
-from keras.layers import Input, SimpleRNN, LSTM, GRU, Dense, BatchNormalization, Dropout, Embedding
+from keras.layers import Input, SimpleRNN, LSTM, GRU, Dense, BatchNormalization, Dropout, LayerNormalization
 import config
 
 class RNN_Model:
@@ -120,6 +120,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
 
    # Add Batch Normalization
    # current_output = BatchNormalization()(current_output)
+   # current_output = LayerNormalization()(current_output)
 
    # Add Dropout Layer (performs worse)
    # current_output = Dropout(dropout)(current_output)

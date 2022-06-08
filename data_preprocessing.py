@@ -1,7 +1,8 @@
 # Data preprocessing
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from scipy import rand
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.utils import shuffle
 import config
 
@@ -99,8 +100,10 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
                 yearly_inputs[i,:] = (yearly_inputs[i,:] / yearly_inputs[i-1,:]) - 1
 
         scaler_yearly_inputs = MinMaxScaler(feature_range=(0,1))
+        # scaler_yearly_inputs = StandardScaler()
         yearly_inputs = scaler_yearly_inputs.fit_transform(yearly_inputs)
         scaler_input = MinMaxScaler(feature_range=(0,1))
+        # scaler_input = StandardScaler()
         input = scaler_input.fit_transform(input)
 
         input = np.concatenate((input, yearly_inputs), axis=1)
@@ -108,6 +111,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     else:
         input = input.to_numpy()
         scaler_input = MinMaxScaler()
+        # scaler_input = StandardScaler()
         input = scaler_input.fit_transform(input)
 
 
@@ -117,15 +121,17 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
 
     print('shape of input: ', input.shape)
 
-    # TODO: Erst Train-Test-Split und dann MinMaxScaler!
+    # TODO: MinMaxScaler nur mit Trainingsdaten!
 
     if config.USE_ADDITIONAL_INPUT:
         if (additional_output_activation == 'sigmoid' or additional_output_activation == 'relu'):
             # Scale additional input/output to (0,1) to be conform with the sigmoid activation function whos value lie in (0,1)
             scaler_additional_output = MinMaxScaler()
+            # scaler_additional_output = StandardScaler()
         elif (additional_output_activation == 'tanh' or additional_output_activation == 'linear'):
             # Scale additional inputs to (-1,1) to be conform with the tanh activation function whos value lie in (-1,1)
             scaler_additional_output = MinMaxScaler(feature_range=(-1,1))
+            # scaler_additional_output = StandardScaler()
 
         additional_output = scaler_additional_output.fit_transform(additional_output.reshape(-1,1))
         additional_input = scaler_additional_output.fit_transform(additional_input.reshape(-1,1))    
@@ -136,9 +142,11 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     if (output_activation == 'tanh' or output_activation == 'linear'):
         # Scale outputs to (-1,1)
         scaler_output = MinMaxScaler(feature_range = (-1,1))
+        # scaler_output = StandardScaler()
     elif (output_activation == 'sigmoid' or output_activation == 'relu'):
         # Scale outputs to (0,1)
         scaler_output = MinMaxScaler()
+        # scaler_output = StandardScaler()
 
     output = scaler_output.fit_transform(output.reshape(-1,1))            
 
@@ -180,12 +188,17 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
 
         for s in range(number_scenarios):
             features_batches.append(features[s*projection_time : (s+1)*projection_time,:,:])
-            labels_batches.append(labels[s*projection_time : (s+1)*projection_time, : ]) 
-            additional_labels_batches.append(additional_labels[s*projection_time : (s+1)*projection_time, : ])
+            labels_batches.append(labels[s*projection_time : (s+1)*projection_time, : ])
+            if config.USE_ADDITIONAL_INPUT:
+                additional_labels_batches.append(additional_labels[s*projection_time : (s+1)*projection_time, : ])
 
         # Shuffle batch-wise, so that features and labels remain aligned
-        features, labels, additional_labels = shuffle(features_batches, labels_batches, additional_labels_batches, random_state=config.RANDOM_SEED)
-        features, labels, additional_labels = np.array(features), np.array(labels), np.array(additional_labels)
+        if config.USE_ADDITIONAL_INPUT:
+            features, labels, additional_labels = shuffle(features_batches, labels_batches, additional_labels_batches, random_state=config.RANDOM_SEED)
+            features, labels, additional_labels = np.array(features), np.array(labels), np.array(additional_labels)
+        else:
+            features, labels = shuffle(features_batches, labels_batches, random_state=config.RANDOM_SEED)
+            features, labels = np.array(features), np.array(labels)
 
         # Reshape arrays
         features = features.reshape(-1, recurrent_timesteps + 1, features.shape[-1])

@@ -67,6 +67,7 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTE
             feature[:,-j,-1] = y_2_hat[i-j::projection_time,0]
 
         # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
+        # TODO: ACHTUNG BEI GRID SEARCH!! Darf nicht auf config.BATCH_SIZE zugreifen, sondern batch_size_i!
         y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = config.BATCH_SIZE)
 
         y_hat[i::projection_time] = y_hat_i

@@ -12,6 +12,13 @@ import data_preprocessing
 import model
 from model import RNN_Model
 
+# Set plot font
+plt.rcParams['text.latex.preamble']=[r"\usepackage{lmodern}"]
+params = {'text.usetex' : True,
+            'font.size' : 11,
+            'font.family' : 'lmodern'}
+plt.rcParams.update(params)
+
 # Set random seed for reproducibility
 random.seed(config.RANDOM_SEED)
 np.random.seed(config.RANDOM_SEED)
@@ -95,9 +102,8 @@ with open(filename, 'wb') as f:
 plt.figure()
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
-plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Validation'])
+plt.ylabel('MSE')
+plt.xlabel('Epoche')
+plt.legend(['Training', 'Validierung'])
 plt.savefig(os.path.dirname(model_name) + '/loss_epochs.pdf')
 plt.show()
