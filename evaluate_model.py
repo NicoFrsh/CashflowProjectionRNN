@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from matplotlib import rc
 import matplotlib.pyplot as plt
+from sklearn import model_selection
 import config
 import data_postprocessing
 
@@ -17,6 +18,9 @@ plt.rcParams.update(params)
 
 # Load predictions and targets
 filepath = config.MODEL_PATH + '/data.pickle'
+# model_path = 'new_grid_search_lstm_add_input_tanh_rnn_tanh/9_T_10_BS_250_tanh_linear_tanh_1_64'
+# filepath = model_path + '/data.pickle'
+
 
 if (os.path.exists(filepath)):
     with open(filepath, 'rb') as f:
@@ -25,6 +29,7 @@ else:
     data = []
 # Load keras history dictionary
 filepath = config.MODEL_PATH + '/history.pickle'
+# filepath = model_path + '/history.pickle'
 
 with open(filepath, 'rb') as f:
     history = pickle.load(f)
@@ -32,16 +37,25 @@ with open(filepath, 'rb') as f:
 print('Evaluating model ', os.path.dirname(filepath))
 
 print(history.keys())
-print('val_mse: ', np.min(history['val_loss']))
+index = np.argmin(history['val_loss'])
 if config.USE_ADDITIONAL_INPUT:
-    index = np.argmin(history['val_loss'])
     val_mae = 0.5 * history['val_net_profit_head_mae'][index] + 0.5 * history['val_additional_input_head_mae'][index]
     print('val_mse_net_profit: ', history['val_net_profit_head_loss'][index])
     print('val_mae_net_profit: ', history['val_net_profit_head_mae'][index])
+    print('train_mse_net_profit: ', history['net_profit_head_loss'][index])
+    print('train_mae_net_profit: ', history['net_profit_head_mae'][index])
 else:
-    val_mae = np.min(history['val_mae'])
+    val_mse = history['val_loss'][index]
+    val_mae = history['val_mae'][index]
+    train_mse = history['loss'][index]
+    train_mae = history['mae'][index]
 
-print('val_mae: ', val_mae)
+    print('val_mse: ', val_mse)
+    print('val_mae: ', val_mae)
+    print('train_mse: ', train_mse)
+    print('train_mae: ', train_mae)
+
+print('Epochs: ', len(history['loss']))
 
 pred_test = data[0]
 y = data[1]
@@ -49,8 +63,8 @@ y = data[1]
 pred_test_original = data[2]
 y_test_original = data[3]
 if len(data) > 4:
-    pred_train = data[4]
-    y_train = data[5]
+    pred_val = data[6]
+    y_val = data[7]
 
 # Count y_test_original == 0 vs. pred_original == 0
 print('# of zeros in targets: ', np.count_nonzero(y_test_original == 0))
@@ -97,11 +111,11 @@ plt.ylabel('MAE')
 plt.title('MAE pro Zeitschritt (Testdaten)')
 
 plt.figure(23)
-plt.plot(x_time, data_postprocessing.calculate_loss_per_timestep(y_train, pred_train, loss_metric='mse'))
+plt.plot(x_time, data_postprocessing.calculate_loss_per_timestep(y_val, pred_val, loss_metric='mse'))
 plt.xlabel('t')
 plt.ylabel('MSE')
 # plt.title('MSE pro Zeitschritt (Trainingsdaten)')
-plt.savefig(os.path.dirname(filepath) + '/mse_timestep_train.pdf')
+plt.savefig(os.path.dirname(filepath) + '/mse_timestep_val.pdf')
 
 # Parity plot
 if config.OUTPUT_ACTIVATION == 'tanh' or config.OUTPUT_ACTIVATION == 'linear':
@@ -117,17 +131,19 @@ plt.plot([axis_min,axis_max], [axis_min,axis_max], 'k--')
 plt.xlabel('Beobachtung')
 plt.ylabel('Vorhersage')
 # plt.title('Modellvorhersagen vs. Beobachtungen (Testdaten)')
-plt.savefig(os.path.dirname(filepath) + '/parity.pdf')
+plt.savefig(os.path.dirname(filepath) + '/parity.png')
 
+min = np.min(y_val)
+max = np.max(y_val)
 plt.figure(999)
-plt.scatter(y_train, pred_train, alpha=0.7)
-plt.plot([axis_min,axis_max], [axis_min,axis_max], 'k--')
+plt.scatter(y_val, pred_val, alpha=0.7)
+plt.plot([min,max], [min,max], 'k--')
 # plt.xlim((axis_min, axis_max))
 # plt.ylim((axis_min, axis_max))
 plt.xlabel('Beobachtung')
-plt.ylabel('Vorhersage')
+plt.ylabel('Zielwert')
 # plt.title('Modellvorhersagen vs. Beobachtungen (Trainingsdaten)')
-plt.savefig(os.path.dirname(filepath) + '/parity_train.png')
+plt.savefig(os.path.dirname(filepath) + '/parity_val.png')
 
 # Parity plot original scale
 min = np.min(y_test_original)
@@ -161,8 +177,8 @@ print('Range of predictions: ', np.min(pred_test_original), ' - ', np.max(pred_t
 
 # predictions_np_mean_test = data_postprocessing.calculate_mean_per_timestep(pred_test_original, config.PROJECTION_TIME)
 # observations_np_mean_test = data_postprocessing.calculate_mean_per_timestep(y_test_original, config.PROJECTION_TIME)
-predictions_np_mean_train = data_postprocessing.calculate_mean_per_timestep(pred_train, config.PROJECTION_TIME)
-observations_np_mean_train = data_postprocessing.calculate_mean_per_timestep(y_train, config.PROJECTION_TIME)
+predictions_np_mean_train = data_postprocessing.calculate_mean_per_timestep(pred_val, config.PROJECTION_TIME)
+observations_np_mean_train = data_postprocessing.calculate_mean_per_timestep(y_val, config.PROJECTION_TIME)
 
 x = range(1,config.PROJECTION_TIME+1)
 
@@ -179,7 +195,7 @@ plt.plot(x, observations_np_mean_train, 'x', label = 'Beobachtung')
 plt.xlabel('t')
 plt.ylabel('Net Profit')
 plt.legend()
-plt.savefig(os.path.dirname(filepath) + '/accuracy.pdf')
+plt.savefig(os.path.dirname(filepath) + '/accuracy_val.pdf')
 
 
 # Boxplot of residuals
@@ -197,14 +213,28 @@ plt.title('Verteilung Beobachtung vs. Vorhersage (Testdaten)(Originalskala)')
 # Distribution of predictions vs. targets
 if len(data) > 4:
     plt.figure(6)
-    plt.hist(y_train, bins='auto', range=(0.9,1), alpha = 0.7, label='Beobachtung')
-    plt.hist(pred_train, bins='auto', range=(0.9,1), alpha = 0.7, label='Vorhersage')
-    # plt.hist(y_train, bins='auto', alpha = 0.7, label='Beobachtung')
-    # plt.hist(pred_train, bins='auto', alpha = 0.7, label='Vorhersage')
+    plt.hist(y_val, bins='auto', range=(0.9,1), alpha = 0.7, label='Beobachtung')
+    plt.hist(pred_val, bins='auto', range=(0.9,1), alpha = 0.7, label='Vorhersage')
+    # plt.hist(y_val, bins='auto', alpha = 0.7, label='Beobachtung')
+    # plt.hist(pred_val, bins='auto', alpha = 0.7, label='Vorhersage')
     plt.legend()
     plt.ylim(top = 10000)
     plt.title('Verteilung Beobachtung vs. Vorhersage (Trainingsdaten)')
     plt.savefig(os.path.dirname(filepath) + '/distribution.pdf')
+
+# Plot one specific scenario
+scenario_number = 4
+
+pred_val_s = pred_val[scenario_number * config.PROJECTION_TIME : scenario_number * config.PROJECTION_TIME + config.PROJECTION_TIME]
+y_val_s = y_val[scenario_number * config.PROJECTION_TIME : scenario_number * config.PROJECTION_TIME + config.PROJECTION_TIME]
+plt.figure(1000)
+plt.plot(x, pred_val_s, '.', label='Vorhersage')
+plt.plot(x, y_val_s, 'x', label='Zielwert')
+plt.xlabel('t')
+plt.ylabel('Net Profit')
+plt.legend()
+plt.savefig(os.path.dirname(filepath) + '/accuracy_val_scenario.pdf')
+
 
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score, explained_variance_score
 

@@ -1,9 +1,9 @@
 # Data preprocessing
 import pandas as pd
 import numpy as np
-from scipy import rand
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.utils import shuffle
+import random
 import config
 
 def prepare_data(scenario_path, outputs_path, output_variable, projection_time = config.PROJECTION_TIME, 
@@ -21,7 +21,6 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     """
 
     # np.random.seed(config.RANDOM_SEED)
-    np.random.seed(config.RANDOM_SEED)
 
     input = pd.read_csv(scenario_path, skiprows=6)
     output = pd.read_csv(outputs_path)
@@ -148,7 +147,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         scaler_output = MinMaxScaler()
         # scaler_output = StandardScaler()
 
-    output = scaler_output.fit_transform(output.reshape(-1,1))            
+    output = scaler_output.fit_transform(output.reshape(-1,1))
 
     # Create input data. Take current input parameters along with TIMESTEPS previous input parameters
     # to predict current output.

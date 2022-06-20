@@ -1,7 +1,7 @@
 from keras.engine.base_layer import Layer
 from tensorflow import keras
 import tensorflow as tf
-from keras.layers import Input, SimpleRNN, LSTM, GRU, Dense, BatchNormalization, Dropout, LayerNormalization
+from keras.layers import Input, SimpleRNN, LSTM, GRU, Dense, BatchNormalization, Dropout, LayerNormalization, Bidirectional
 import config
 
 class RNN_Model:
@@ -93,9 +93,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
 
    current_output = input
 
-   dropout = 0.0
-   # if use_dropout:
-   #    dropout = 0.1
+   dropout = config.DROPOUT_RATE
 
    if recurrent_layers > 1:
       for i in range(recurrent_layers - 1):
@@ -105,6 +103,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
          
          elif model_type == 'lstm':
             current_output = LSTM(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
+            # current_output = LSTM(recurrent_cells, activation='linear', return_sequences=True, dropout=dropout)(current_output)
 
          elif model_type == 'gru':
             current_output = GRU(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
@@ -114,6 +113,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
    
    elif model_type == 'lstm':
       current_output = LSTM(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation, dropout=dropout)(current_output)
+      # current_output = LSTM(int(2*recurrent_cells), activation=recurrent_activation, dropout=dropout)(current_output)
 
    elif model_type == 'gru':
       current_output = GRU(int(recurrent_cells / (2**(recurrent_layers-1))), activation=recurrent_activation, dropout=dropout)(current_output)
@@ -123,9 +123,12 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
    # current_output = LayerNormalization()(current_output)
 
    # Add Dropout Layer (performs worse)
-   # current_output = Dropout(dropout)(current_output)
+   # if dropout > 0.0:
+   #    current_output = Dropout(dropout)(current_output)
 
    # TODO: Ausprobieren: Zusaetzlicher Dense Layer mit mehr Neuronen und vielleicht ReLu vor Output Dense Layer
+
+   # current_output = Dense(recurrent_cells, activation='relu')(current_output)
 
    net_profit_head = Dense(1, activation=output_activation, bias_initializer=keras.initializers.Constant(average_label),
    name = 'net_profit_head')(current_output)
@@ -142,10 +145,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
    if use_additional_input:
       model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss={'net_profit_head':'mse','additional_input_head':'mse'}, metrics={'net_profit_head':'mae','additional_input_head':'mae'},
       loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
-      # model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=learning_rate), loss={'net_profit_head':'mse','additional_input_head':'mse'}, metrics={'net_profit_head':'mae','additional_input_head':'mae'},
-      # loss_weights={'net_profit_head': 0.5, 'additional_input_head': 0.5})
    else:
       model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse', metrics=['mae'])
-      # model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
    return model

@@ -6,11 +6,11 @@ SHUFFLE = True
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_60_10k.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/output_60_10k.csv'
 OUTPUT_VARIABLE = 'net profit'
-USE_ADDITIONAL_INPUT = False
+USE_ADDITIONAL_INPUT = True
 ADDITIONAL_INPUT = 'gross surplus'
 
 PROJECTION_TIME = 60
-TIMESTEPS = 2
+TIMESTEPS = 5
 
 MODEL_TYPE = 'lstm'
 LEARNING_RATE = 0.01
@@ -18,12 +18,13 @@ LEARNING_RATE = 0.01
 LSTM_CELLS = 32
 LSTM_LAYERS = 1
 BATCH_SIZE = 500
+DROPOUT_RATE = 0.0
 # Note: All activations other than 'tanh' are slower, as CuDNN is only implemented for 'tanh'.
 RNN_ACTIVATION = 'tanh'
 # TODO: lineare Aktivierung ausprobieren!
 OUTPUT_ACTIVATION = 'tanh'
 # sigmoid am besten, da die Inputs alle positiv sind und dann die Skalierung auf (0,1) optimal ist.
-ADDITIONAL_OUTPUT_ACTIVATION = 'sigmoid'
+ADDITIONAL_OUTPUT_ACTIVATION = 'tanh'
 
 TRAIN_RATIO = 0.9
 EPOCHS = 500

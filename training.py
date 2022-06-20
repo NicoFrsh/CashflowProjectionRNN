@@ -5,7 +5,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
 
 import config
 import data_preprocessing
@@ -33,7 +32,7 @@ else:
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
 
 
-# Input shape = (timesteps, # features)
+# Input shape = (timesteps + 1, # features)
 input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)

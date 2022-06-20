@@ -12,12 +12,12 @@ import data_postprocessing
 
 model_path = config.MODEL_PATH + '/model.h5'
 # Fixed parameters
-# model_type = 'LSTM'
+# model_type = 'lstm'
 # use_additional_input = False
 # yearly = True
 # discounted = True
-# path = f'test_grid_search_{model_type}_lr_{str.replace(str(config.LEARNING_RATE), ".", "")}_yearly_discounted/'
-# path += f'T_{config.TIMESTEPS}_BS_{config.BATCH_SIZE}_{config.RNN_ACTIVATION}_{config.OUTPUT_ACTIVATION}_{config.LSTM_LAYERS}_{config.LSTM_CELLS}'
+# path = f'new_grid_search_{model_type}_add_input_tanh_rnn_tanh/'
+# path += '9_T_10_BS_250_tanh_linear_tanh_1_64'
 # model_path = path + '/model.h5'
 
 print('Model path: ', model_path)
@@ -52,19 +52,25 @@ model_lstm.load_weights(model_path)
 # Make predictions
 # If an additional input, e.g. RfB, is used the net shall predict the test data using the predicted additional inputs recursively.
 if config.USE_ADDITIONAL_INPUT:
-    pred_test, pred_add_output_test = data_postprocessing.recursive_prediction(X_test, model_lstm)
+    pred_test, _ = data_postprocessing.recursive_prediction(X_test, model_lstm)
     # pred_test, pred_add_output_test = model_lstm.predict(X_test)
-    pred_train, predictions_add_output_train = model_lstm.predict(X_train)
+    pred_train, _ = model_lstm.predict(X_train)
+    # pred_val, _ = model_lstm.predict(X_val)
+    pred_val, _ = data_postprocessing.recursive_prediction(X_val, model_lstm)
 else:
     pred_test = model_lstm.predict(X_test)
     pred_train = model_lstm.predict(X_train)
+    pred_val = model_lstm.predict(X_val)
 
 # Obtain original scaled data
 pred_test_original = scaler_output.inverse_transform(pred_test)
-y_original = scaler_output.inverse_transform(y_test)
+y_test_original = scaler_output.inverse_transform(y_test)
 
 pred_train_original = scaler_output.inverse_transform(pred_train)
 y_train_original = scaler_output.inverse_transform(y_train)
+
+pred_val_original = scaler_output.inverse_transform(pred_val)
+y_val_original = scaler_output.inverse_transform(y_val)
 
 # Save predictions array
 filename = config.MODEL_PATH + '/data.pickle'
@@ -72,4 +78,4 @@ filename = config.MODEL_PATH + '/data.pickle'
 
 with open(filename, 'wb') as f:
     pickle.dump(
-        [pred_test,y_test, pred_test_original, y_original, pred_train, y_train, pred_train_original, y_train_original], f)
+        [pred_test,y_test, pred_test_original, y_test_original, pred_val, y_val, pred_val_original, y_val_original], f)

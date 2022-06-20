@@ -12,34 +12,31 @@ from model import build_model
 import data_preprocessing
 import data_postprocessing
 
-# Set random seed to get reproducible combinations
 random.seed(config.RANDOM_SEED)
-np.random.seed(config.RANDOM_SEED)
-tf.random.set_seed(config.RANDOM_SEED)
 
 # Grid search configurations
-sample_ratio = 0.15
+sample_ratio = 0.25
 
 # Fixed parameters
-model_type = 'lstm'
-use_additional_input = False
-learning_rate = 0.005
+model_type = 'gru'
+use_additional_input = True
+learning_rate = 0.01
 yearly = True
 discounted = True
-path = f'test_shuffle_stability_{model_type}_lr_{str.replace(str(learning_rate), ".", "")}_yearly_discounted/'
+path = f'grid_search_{model_type}_gross_surplus/'
 
 print('PATH: ', path)
 
 # Define hyperparameter grid
 shuffle = [True]#, False]
-timesteps = [2]#,4,6,8]
-lstm_cells = [32]#, 64, 128]
-lstm_layers = [1]#, 2, 3, 4]
+timesteps = [5,10,15,20]
+lstm_cells = [32, 64, 128]
+lstm_layers = [1]#, 3]
 use_dropout = [False]#,True]
-batch_size = [100, 250, 500, 1000]
-rnn_activation = ['tanh']#, 'relu', 'linear']
-output_activation = ['tanh']#, 'linear']
-additional_output_activation = ['tanh']#, 'linear', 'sigmoid']
+batch_size = [250, 500, 1000]
+rnn_activation = ['tanh']#,'relu', 'linear']
+output_activation = ['tanh','linear']
+additional_output_activation = ['tanh','linear']#, 'linear', 'sigmoid']
 
 number_combinations = len(shuffle)*len(timesteps)*len(lstm_cells)*len(lstm_layers)*len(use_dropout)*len(batch_size)*len(rnn_activation)*len(output_activation)*len(additional_output_activation)
 print('total # of combinations: ', number_combinations)
@@ -50,33 +47,32 @@ print(f'sampling {number_sample} combinations.')
 
 results = []
 
-for i in range(2):
+for i in range(number_sample):
 
-    random_seed = i
+    # Set random seed to get reproducible combinations
+    np.random.seed(config.RANDOM_SEED)
+    tf.random.set_seed(config.RANDOM_SEED)
 
-    tf.keras.backend.clear_session()
-
-    shuffle_i = random.choice(shuffle)
     timesteps_i = random.choice(timesteps)
     lstm_cells_i = random.choice(lstm_cells)
     lstm_layers_i = random.choice(lstm_layers)
     if lstm_layers_i > 1: # multilayer rnn need less cells
-        lstm_cells_i = int(lstm_cells_i / 2)
+        # lstm_cells_i = int(lstm_cells_i / 2)
+        lstm_cells_i = 16
     # use_dropout_i = random.choice(use_dropout)
     batch_size_i = random.choice(batch_size)
     rnn_activation_i = random.choice(rnn_activation)
     output_activation_i = random.choice(output_activation)
     additional_output_activation_i = random.choice(additional_output_activation)
 
-    model_name = f'{i}_'
-    if shuffle_i:
-        model_name += 'shuffle_'
-    model_name += f'T_{timesteps_i}_BS_{batch_size_i}_{rnn_activation_i}_{output_activation_i}_{lstm_layers_i}_{lstm_cells_i}'
-    model_dict = dict()
+    model_name = f'T_{timesteps_i}_BS_{batch_size_i}_{rnn_activation_i}_{output_activation_i}_{additional_output_activation_i}_{lstm_layers_i}_{lstm_cells_i}'
     for element in results:
         if element['model_name'] == model_name:
+            print('Skip repetitive combination.')
             continue
 
+    model_name = f'{i}_' + model_name
+    model_dict = dict()
     model_dict['model_name'] = model_name
 
     model_path = path + model_name
@@ -86,11 +82,11 @@ for i in range(2):
     if use_additional_input:
         X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
         config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, recurrent_timesteps=timesteps_i, output_activation=output_activation_i,
-        additional_output_activation=additional_output_activation_i, shuffle_data=shuffle_i, train_ratio=config.TRAIN_RATIO)
+        additional_output_activation=additional_output_activation_i, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
     else:
         X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
         config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, recurrent_timesteps=timesteps_i, output_activation=output_activation_i,
-        additional_output_activation=additional_output_activation_i, shuffle_data=shuffle_i, train_ratio=config.TRAIN_RATIO)
+        additional_output_activation=additional_output_activation_i, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
 
     # Get input shape
     input_shape = (timesteps_i + 1, X_train.shape[2])
@@ -136,26 +132,66 @@ for i in range(2):
     ]
 
     # Fit network
-    if config.USE_ADDITIONAL_INPUT:
+    if use_additional_input:
         history = model.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=batch_size_i,
-        validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
+        validation_data=(X_val, [y_val,y_2_val]), verbose=2, callbacks=callbacks, shuffle = True)
 
     else:
         history = model.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=batch_size_i,
         validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
-    # Save test and validation loss in dictionary
-    min_index = np.argmin(history.history['val_loss'])
-    train_loss = history.history['loss'][min_index]
-    val_loss = history.history['val_loss'][min_index]
+    history = history.history
 
-    model_dict['train_loss'] = train_loss
-    model_dict['val_loss'] = val_loss
-    model_dict['epochs'] = len(history.history['loss'])
+    # Save history object
+    with open(model_path + '/history.pickle', 'wb') as f:
+        pickle.dump(history, f)
+
+    # Plot history of losses
+    plt.figure()
+    plt.plot(history['loss'])
+    plt.plot(history['val_loss'])
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Validation'])
+    plt.savefig(model_path + '/loss_epochs.pdf')
+
+    # Load model and history
+    # if (not os.path.exists(model_path+ '/history.pickle')):
+    #     continue
+
+    # model.load_weights(model_path + '/model.h5')
+    # with open(model_path + '/history.pickle', 'rb') as f:
+    #     history = pickle.load(f)
+
+    # Save test and validation loss in dictionary
+    min_index = np.argmin(history['val_loss'])
+    if use_additional_input:
+        train_loss = history['net_profit_head_loss'][min_index]
+        train_mae = history['net_profit_head_mae'][min_index]
+        val_loss = history['val_net_profit_head_loss'][min_index]
+        val_mae = history['val_net_profit_head_mae'][min_index]
+    else:
+        train_loss = history['loss'][min_index]
+        train_mae = history['mae'][min_index]
+        val_loss = history['val_loss'][min_index]
+        val_mae = history['val_mae'][min_index]
+
+    model_dict['epochs'] = len(history['loss'])
+    model_dict['train_mse'] = train_loss
+    model_dict['val_mse'] = val_loss
+    model_dict['train_mae'] = train_mae
+    model_dict['val_mae'] = val_mae
 
     # Compute pvfps and save accuracy
-    pred_train = model.predict(X_train)
-    pred_val = model.predict(X_val)
+    if use_additional_input:
+        # TODO: Recursive prediction for inference?
+        pred_train, _ = model.predict(X_train)
+        pred_val, _ = model.predict(X_val)
+    else:
+        pred_train = model.predict(X_train)
+        pred_val = model.predict(X_val)
+
     pvfp_train_pred = data_postprocessing.calculate_stoch_pvfp(pred_train)
     pvfp_train_target = data_postprocessing.calculate_stoch_pvfp(y_train)
     pvfp_val_pred = data_postprocessing.calculate_stoch_pvfp(pred_val)
@@ -184,28 +220,20 @@ for i in range(2):
 
     results.append(model_dict)
 
+    # # Clean memory
+    # # reset_keras()
+    tf.keras.backend.clear_session()
+    # # gc.collect()
 
-    # Save history object
-    with open(model_path + '/history.pickle', 'wb') as f:
-        pickle.dump(history.history, f)
 
-    # Plot history of losses
-    plt.figure()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('Model loss')
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Validation'])
-    plt.savefig(model_path + '/loss_epochs.pdf')
 
-# Save history object
-with open(model_path + '/model_dict.pickle', 'wb') as f:
-    pickle.dump(model_dict, f)
+# Save results dictionary
+with open(path + 'results.pickle', 'wb') as f:
+    pickle.dump(results, f)
 
 # Write results dictionary into csv file
-headers = ['model_name', 'train_loss', 'val_loss','epochs','train_pvfp_error','val_pvfp_error','train_mae_pvfps','val_mae_pvfps']
-with open(path + 'results123.csv', 'w') as f:
+headers = ['model_name','epochs','train_mse','val_mse','train_mae','val_mae','train_pvfp_error','val_pvfp_error','train_mae_pvfps','val_mae_pvfps']
+with open(path + 'results.csv', 'w') as f:
     writer = csv.DictWriter(f, fieldnames= headers)
     writer.writeheader()
     writer.writerows(results)
