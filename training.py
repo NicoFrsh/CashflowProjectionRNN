@@ -2,42 +2,37 @@
 import os
 import random
 import numpy as np
-from sklearn.utils import shuffle
 import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
 
 import config
 import data_preprocessing
+import model
 from model import RNN_Model
+
+# Set plot font
+plt.rcParams['text.latex.preamble']=[r"\usepackage{lmodern}"]
+params = {'text.usetex' : True,
+            'font.size' : 11,
+            'font.family' : 'lmodern'}
+plt.rcParams.update(params)
 
 # Set random seed for reproducibility
 random.seed(config.RANDOM_SEED)
 np.random.seed(config.RANDOM_SEED)
 tf.random.set_seed(config.RANDOM_SEED)
 
-shuffled_validation_split = False
-
 # Create training and test data
 if config.USE_ADDITIONAL_INPUT:
     X_train, y_train, y_2_train, X_val, y_val, y_2_val, X_test, y_test, y_2_test, scaler_output, scaler_additional_input, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
-    # Create validation data 
-    # X_train, y_train, y_2_train, X_val, y_val, y_2_val = data_preprocessing.train_test_split(X_train, y_train, y_2_train, 0.9)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
 else:
     X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
-    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=False, train_ratio=config.TRAIN_RATIO)
-    # Create validation data
-    # X_train, y_train, X_val, y_val = data_preprocessing.train_test_split(X_train, y_train, [], 0.9)
+    config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
 
 
-# TODO: stratified split! Bisher ist ohne shuffle noch besser!
-# TODO: x_2_val und y_2_val fuer additional input
-if shuffled_validation_split:
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
-
-# Input shape = (timesteps, # features)
+# Input shape = (timesteps + 1, # features)
 input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
@@ -47,12 +42,12 @@ if config.USE_ADDITIONAL_INPUT:
     average_label_2 = np.mean(y_2_train)
 
 # model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
-model_lstm = RNN_Model(config.MODEL_TYPE, input_shape, average_label, average_label_2).model
+# model_lstm = RNN_Model(config.MODEL_TYPE, input_shape, average_label, average_label_2).model
+model_lstm = model.build_model(config.MODEL_TYPE, config.USE_ADDITIONAL_INPUT, config.LEARNING_RATE, input_shape,
+                                config.LSTM_LAYERS, config.LSTM_CELLS, config.RNN_ACTIVATION, config.OUTPUT_ACTIVATION,
+                                config.ADDITIONAL_OUTPUT_ACTIVATION, average_label, average_label_2)
 
 model_lstm.summary()
-
-# TODO: Install graphviz via brew
-# keras.utils.plot_model(model_lstm, 'lstm_model.png', show_shapes = True)
 
 # Generate descriptive filename for model 
 model_name = config.MODEL_PATH + '/model.h5'
@@ -75,7 +70,6 @@ callbacks = [
         # The two parameters below mean that we will overwrite
         # the current checkpoint if and only if
         # the `val_loss` score has improved.
-        # The saved model name will include the current epoch.
         filepath=model_name,
         save_weights_only=False,
         save_best_only=True,  # Only save a model if `val_loss` has improved.
@@ -88,16 +82,16 @@ callbacks = [
 
 # Fit network
 if config.USE_ADDITIONAL_INPUT:
-    history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, #validation_split=0.2,
-    validation_data=(X_val, [y_val, y_2_val]), verbose=2, callbacks=callbacks, shuffle = True)
+    history = model_lstm.fit(x = X_train, y = [y_train, y_2_train], epochs=config.EPOCHS, batch_size=config.BATCH_SIZE,
+    validation_data=(X_val, [y_val,y_2_val]), verbose=2, callbacks=callbacks, shuffle = True)
 
 else:
-    history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE, #validation_split=0.2,
+    history = model_lstm.fit(x = X_train, y = y_train, epochs=config.EPOCHS, batch_size=config.BATCH_SIZE,
     validation_data=(X_val, y_val), verbose=2, callbacks=callbacks, shuffle = True)
 
 # Save history object with pickle
 import pickle
-# Save predictions array
+# Save history object
 filename = os.path.dirname(model_name) + '/history.pickle'
 
 with open(filename, 'wb') as f:
@@ -107,9 +101,8 @@ with open(filename, 'wb') as f:
 plt.figure()
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
-plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Validation'])
-plt.savefig(os.path.dirname(model_name) + '/loss_epochs.eps')
+plt.ylabel('MSE')
+plt.xlabel('Epoche')
+plt.legend(['Training', 'Validierung'])
+plt.savefig(os.path.dirname(model_name) + '/loss_epochs.pdf')
 plt.show()

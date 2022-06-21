@@ -3,7 +3,8 @@ __pycache__
 models*/
 tensorflow-apple-metal.yml
 plots
-data
+data/
+models_10k
+models_60_10k
 *grid_search*/
-Outputs/
 shuffle*/
