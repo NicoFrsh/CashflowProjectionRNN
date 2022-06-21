@@ -10,12 +10,12 @@ USE_ADDITIONAL_INPUT = True
 ADDITIONAL_INPUT = 'gross surplus'
 
 PROJECTION_TIME = 60
-TIMESTEPS = 5
+TIMESTEPS = 15
 
 MODEL_TYPE = 'lstm'
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 
-LSTM_CELLS = 32
+LSTM_CELLS = 64
 LSTM_LAYERS = 1
 BATCH_SIZE = 500
 DROPOUT_RATE = 0.0
@@ -38,7 +38,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_60_10k/shortrate_{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:

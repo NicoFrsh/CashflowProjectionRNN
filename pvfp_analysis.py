@@ -8,8 +8,6 @@ import config
 from data_postprocessing import calculate_stochastic_pvfp, calculate_stoch_pvfp, calculate_pvfp
 import data_preprocessing
 
-# TODO: Herausfinden, warum Verteilungs unterschiedlich wenn diskontiert!!!
-
 # Get discount functions from scenario file
 input = pd.read_csv(config.PATH_SCENARIO, skiprows=6)
 
@@ -36,8 +34,8 @@ discount_functions_train = discount_functions[:idx_train_end]
 discount_functions_test = discount_functions[idx_test_start:]
 
 # Load predictions and targets
-filepath = config.MODEL_PATH + '/data.pickle'
-# filepath = 'grid_search_add_input_sigmoid_LSTM_rnn_tanh/9_T_8_BS_250_tanh_linear_1_64/data.pickle'
+# filepath = config.MODEL_PATH + '/data.pickle'
+filepath = 'grid_search_lstm_gross_surplus/Ensemble_5/data.pickle'
 
 if (os.path.exists(filepath)):
     with open(filepath, 'rb') as f:

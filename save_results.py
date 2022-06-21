@@ -30,7 +30,7 @@ else:
     X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input = data_preprocessing.prepare_data(
     config.PATH_SCENARIO, config.PATH_OUTPUT, config.OUTPUT_VARIABLE, shuffle_data=config.SHUFFLE, train_ratio=config.TRAIN_RATIO)
 
-# Input shape = (timesteps, # features)
+# Input shape = (timesteps+1, # features)
 input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
 
 # Get average of labels (used as initial bias value)
@@ -52,11 +52,11 @@ model_lstm.load_weights(model_path)
 # Make predictions
 # If an additional input, e.g. RfB, is used the net shall predict the test data using the predicted additional inputs recursively.
 if config.USE_ADDITIONAL_INPUT:
-    pred_test, _ = data_postprocessing.recursive_prediction(X_test, model_lstm)
+    pred_test, _ = data_postprocessing.recursive_prediction(X_test, model_lstm, config.TIMESTEPS, config.BATCH_SIZE)
     # pred_test, pred_add_output_test = model_lstm.predict(X_test)
     pred_train, _ = model_lstm.predict(X_train)
     # pred_val, _ = model_lstm.predict(X_val)
-    pred_val, _ = data_postprocessing.recursive_prediction(X_val, model_lstm)
+    pred_val, _ = data_postprocessing.recursive_prediction(X_val, model_lstm, config.TIMESTEPS, config.BATCH_SIZE)
 else:
     pred_test = model_lstm.predict(X_test)
     pred_train = model_lstm.predict(X_train)

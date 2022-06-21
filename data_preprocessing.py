@@ -42,7 +42,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     input = input[input['Zeit'] != projection_time + 2]
 
     # Filter parameters
-    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
+    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','Shortrate','1','5','10','15','20','30']
     input = input.loc[:, parameters]
 
     # Change format of dataframe to long table

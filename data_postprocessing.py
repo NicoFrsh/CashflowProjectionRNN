@@ -48,14 +48,14 @@ def recursive_prediction_old(X_test, rnn_model):
     return y_hat
 
 
-def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTEPS):
+def recursive_prediction(X_test, rnn_model, recurrent_timesteps, batch_size):
 
     num_features = X_test.shape[2]
     projection_time = config.PROJECTION_TIME
 
     # y_hat collects all predictions made by our network
     y_hat = np.empty((X_test.shape[0], 1))
-    y_2_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
+    z_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
 
     for i in range(projection_time):
         # ...
@@ -64,18 +64,17 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps = config.TIMESTE
         feature = X_test[i::projection_time, :, :]
         for j in range(1, t_rec + 1):
             # Replace additional input with predictions of additional input
-            feature[:,-j,-1] = y_2_hat[i-j::projection_time,0]
+            feature[:,-j,-1] = z_hat[i-j::projection_time,0]
 
         # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
-        # TODO: ACHTUNG BEI GRID SEARCH!! Darf nicht auf config.BATCH_SIZE zugreifen, sondern batch_size_i!
-        y_hat_i, y_2_hat_i = rnn_model.predict(feature, batch_size = config.BATCH_SIZE)
+        y_hat_i, z_hat_i = rnn_model.predict(feature, batch_size = batch_size)
 
         y_hat[i::projection_time] = y_hat_i
         if config.USE_ADDITIONAL_INPUT:
-            y_2_hat[i::projection_time] = y_2_hat_i
+            z_hat[i::projection_time] = z_hat_i
 
     if config.USE_ADDITIONAL_INPUT:
-        return y_hat, y_2_hat
+        return y_hat, z_hat
     else:
         return y_hat
 
