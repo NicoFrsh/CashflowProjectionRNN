@@ -215,7 +215,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         return X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input
 
 
-def train_val_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME, train_2500 = config.TRAIN_2500):
+def train_val_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME):
     """
     Splits the full dataset (features and labels) into training, validation and test set using 'train_ratio' percent of
     the data as training data and the rest evenly distributed as validation and test data. E.g. train_ratio = 0.9:  
@@ -226,7 +226,12 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
     total_scenarios = len(labels) / projection_time
 
     train_scenarios_end = int(total_scenarios * train_ratio)
-    val_scenarios_end = int(total_scenarios * (train_ratio + ((1-train_ratio)/2)))
+
+    if config.TRAIN_2500:
+        val_scenarios_end = int(train_scenarios_end * (1 + config.VAL_RATIO))
+    else:    
+        val_scenarios_end = int(total_scenarios * (train_ratio + ((1-train_ratio)/2)))
+
 
     idx_train_end = train_scenarios_end * projection_time
     idx_val_end = val_scenarios_end * projection_time
@@ -237,7 +242,6 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
     y_val = labels[idx_train_end:idx_val_end,:]
     X_test = features[idx_val_end:,:,:]
     y_test = labels[idx_val_end:,:]
-
 
     if config.USE_ADDITIONAL_INPUT:
         y_2_train = additional_labels[:idx_train_end,:]

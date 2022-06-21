@@ -34,8 +34,8 @@ discount_functions_train = discount_functions[:idx_train_end]
 discount_functions_test = discount_functions[idx_test_start:]
 
 # Load predictions and targets
-# filepath = config.MODEL_PATH + '/data.pickle'
-filepath = 'grid_search_lstm_gross_surplus/Ensemble_5/data.pickle'
+filepath = config.MODEL_PATH + '/data.pickle'
+# filepath = 'grid_search_lstm_gross_surplus/Ensemble_5/data.pickle'
 
 if (os.path.exists(filepath)):
     with open(filepath, 'rb') as f:

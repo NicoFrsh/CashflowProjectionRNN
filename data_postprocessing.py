@@ -49,13 +49,16 @@ def recursive_prediction_old(X_test, rnn_model):
 
 
 def recursive_prediction(X_test, rnn_model, recurrent_timesteps, batch_size):
+    """
+    Berechnet die Vorhersagen eines gegebenen RNN-Modells mit zwei Output-Heads. Hierbei wird ein Output-Head als Input des
+    Netzes benutzt, sodass dieser rekursiv als Input eingespeist werden muss.
+    """
 
-    num_features = X_test.shape[2]
     projection_time = config.PROJECTION_TIME
 
-    # y_hat collects all predictions made by our network
-    y_hat = np.empty((X_test.shape[0], 1))
-    z_hat = np.empty_like(y_hat) # Prediction of ADDITONAL_INPUT
+    # y collects all predictions made by our network
+    y = np.empty((X_test.shape[0], 1))
+    z = np.empty_like(y) # Prediction of ADDITONAL_INPUT
 
     for i in range(projection_time):
         # ...
@@ -64,19 +67,19 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps, batch_size):
         feature = X_test[i::projection_time, :, :]
         for j in range(1, t_rec + 1):
             # Replace additional input with predictions of additional input
-            feature[:,-j,-1] = z_hat[i-j::projection_time,0]
+            feature[:,-j,-1] = z[i-j::projection_time,0]
 
         # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
-        y_hat_i, z_hat_i = rnn_model.predict(feature, batch_size = batch_size)
+        y_i, z_i = rnn_model.predict(feature, batch_size = batch_size)
 
-        y_hat[i::projection_time] = y_hat_i
+        y[i::projection_time] = y_i
         if config.USE_ADDITIONAL_INPUT:
-            z_hat[i::projection_time] = z_hat_i
+            z[i::projection_time] = z_i
 
     if config.USE_ADDITIONAL_INPUT:
-        return y_hat, z_hat
+        return y, z
     else:
-        return y_hat
+        return y
 
 
 def calculate_mean_per_timestep(outputs, timesteps):

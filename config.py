@@ -1,5 +1,6 @@
 # Configuration parameters
-TRAIN_2500 = False
+TRAIN_2500 = True
+VAL_RATIO = 0.2
 
 RANDOM_SEED = 123
 SHUFFLE = True
@@ -17,7 +18,7 @@ MODEL_TYPE = 'lstm'
 LEARNING_RATE = 0.01
 
 LSTM_CELLS = 64
-LSTM_LAYERS = 1
+LSTM_LAYERS = 4
 BATCH_SIZE = 500
 DROPOUT_RATE = 0.0
 # Note: All activations other than 'tanh' are slower, as CuDNN is only implemented for 'tanh'.
@@ -28,6 +29,8 @@ OUTPUT_ACTIVATION = 'tanh'
 ADDITIONAL_OUTPUT_ACTIVATION = 'tanh'
 
 TRAIN_RATIO = 0.9
+if TRAIN_2500:
+    TRAIN_RATIO = 0.25
 EPOCHS = 500
 
 ## Parameters for comparison of different versions

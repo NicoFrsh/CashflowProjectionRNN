@@ -10,7 +10,7 @@ import config
 import data_postprocessing
 
 # Settings
-plot_val_data = False
+plot_val_data = True
 plot_test_data = True
 
 # Set plot font
@@ -21,9 +21,9 @@ params = {'text.usetex' : True,
 plt.rcParams.update(params)
 
 # Load predictions and targets
-# filepath = config.MODEL_PATH + '/data.pickle'
-model_path = 'grid_search_lstm_gross_surplus/Ensemble_5'
-filepath = model_path + '/data.pickle'
+filepath = config.MODEL_PATH + '/data.pickle'
+# model_path = 'grid_search_lstm_gross_surplus/Ensemble_5'
+# filepath = model_path + '/data.pickle'
 
 print('Evaluating model ', os.path.dirname(filepath))
 
@@ -33,8 +33,8 @@ if (os.path.exists(filepath)):
 else: 
     data = []
 # Load keras history dictionary
-# filepath = config.MODEL_PATH + '/history.pickle'
-filepath = model_path + '/history.pickle'
+filepath = config.MODEL_PATH + '/history.pickle'
+# filepath = model_path + '/history.pickle'
 
 if (os.path.exists(filepath)):
     with open(filepath, 'rb') as f:
