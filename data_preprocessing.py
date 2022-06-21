@@ -42,7 +42,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
     input = input[input['Zeit'] != projection_time + 2]
 
     # Filter parameters
-    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','Shortrate','1','5','10','15','20','30']
+    parameters = ['Diskontfunktion','Aktien','Dividenden','Immobilien','Mieten','10j Spotrate fuer ZZR','1','3','5','10','15','20','30']
     input = input.loc[:, parameters]
 
     # Change format of dataframe to long table
@@ -215,7 +215,7 @@ def prepare_data(scenario_path, outputs_path, output_variable, projection_time =
         return X_train, y_train, X_val, y_val, X_test, y_test, scaler_output, scaler_input
 
 
-def train_val_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME):
+def train_val_test_split(features, labels, additional_labels, train_ratio, projection_time = config.PROJECTION_TIME, train_2500 = config.TRAIN_2500):
     """
     Splits the full dataset (features and labels) into training, validation and test set using 'train_ratio' percent of
     the data as training data and the rest evenly distributed as validation and test data. E.g. train_ratio = 0.9:  

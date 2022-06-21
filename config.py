@@ -1,4 +1,5 @@
 # Configuration parameters
+TRAIN_2500 = True
 
 RANDOM_SEED = 123
 SHUFFLE = True
@@ -38,7 +39,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/shortrate_{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_2500/{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:
