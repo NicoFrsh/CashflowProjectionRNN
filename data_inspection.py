@@ -29,11 +29,29 @@ print(labels[0])
 features_extract = X_train[0, :, :]
 # features = [scaler_input.inverse_transform(X_train[:,i,:]) for i in range(config.TIMESTEPS)]
 # features = np.array(features)
-print('shape of features: ', features_extract.shape)
+# print('shape of features: ', features_extract.shape)
 # features = scaler_input.inverse_transform(X_train.reshape())
 
-print('first features: ')   
-print(features_extract)
+# print('first features: ')   
+# print(features_extract)
+
+
+# Input shape = (timesteps + 1, # features)
+input_shape = (config.TIMESTEPS + 1, X_train.shape[2])
+
+# Get average of labels (used as initial bias value)
+average_label = np.mean(y_train)
+average_label_2 = None
+if config.USE_ADDITIONAL_INPUT:
+    average_label_2 = np.mean(y_2_train)
+
+# model_lstm = model.create_rnn_model(lstm_input_shape, average_label, average_label_2)
+# model_lstm = RNN_Model(config.MODEL_TYPE, input_shape, average_label, average_label_2).model
+model_lstm = model.build_model(config.MODEL_TYPE, config.USE_ADDITIONAL_INPUT, config.LEARNING_RATE, input_shape,
+                                config.LSTM_LAYERS, config.LSTM_CELLS, config.RNN_ACTIVATION, config.OUTPUT_ACTIVATION,
+                                config.ADDITIONAL_OUTPUT_ACTIVATION, average_label, average_label_2)
+
+model_lstm.summary()
 
 # print('---------------')
 # print('Shape X_test: ', X_test.shape)

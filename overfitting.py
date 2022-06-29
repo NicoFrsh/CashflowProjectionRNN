@@ -4,6 +4,13 @@ import math
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import f_oneway
 
+# Set plot font
+plt.rcParams['text.latex.preamble']=[r"\usepackage{lmodern}"]
+params = {'text.usetex' : True,
+            'font.size' : 18,
+            'font.family' : 'lmodern'}
+plt.rcParams.update(params)
+
 # Plot overfitting loss
 # x = np.arange(start=0,stop=5, step=1)
 # y = np.array([1.0, 0.6, 0.4, 0.35, 0.3])
@@ -18,13 +25,14 @@ plt.figure(2)
 # plt.plot(x_f, f_overfit(x_f))
 plt.plot(x_f, f_train_underfit, label='Training')
 plt.plot(x_f, f_test_underfit, label='Test')
+plt.plot(x_f, np.repeat(0.2, len(x_f)), 'r--', alpha = 0.6)
 plt.xlabel('Epoche')
 plt.xticks([])
 plt.yticks([0.0])
 plt.ylabel('Kosten')
 plt.legend()
 plt.ylim(0.0, 1.0)
-# plt.savefig('./plots/underfitting.pdf')
+plt.savefig('./plots/underfitting.pdf')
 
 
 # Overfitting loss
@@ -41,7 +49,7 @@ plt.yticks([0.0])
 plt.ylabel('Kosten')
 plt.legend()
 plt.ylim(0.0, 1.0)
-# plt.savefig('./plots/overfitting.pdf')
+plt.savefig('./plots/overfitting.pdf')
 
 # xp = np.linspace(0,6,50)
 # x_test = np.linspace(0,6,5)

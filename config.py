@@ -12,14 +12,14 @@ USE_ADDITIONAL_INPUT = True
 ADDITIONAL_INPUT = 'gross surplus'
 
 PROJECTION_TIME = 60
-TIMESTEPS = 15
+TIMESTEPS = 20
 
 MODEL_TYPE = 'lstm'
 LEARNING_RATE = 0.01
 
 LSTM_CELLS = 64
-LSTM_LAYERS = 4
-BATCH_SIZE = 500
+LSTM_LAYERS = 1
+BATCH_SIZE = 250
 DROPOUT_RATE = 0.0
 # Note: All activations other than 'tanh' are slower, as CuDNN is only implemented for 'tanh'.
 RNN_ACTIVATION = 'tanh'
@@ -42,7 +42,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_2500/{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_3000/{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:

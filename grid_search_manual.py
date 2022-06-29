@@ -18,12 +18,12 @@ random.seed(config.RANDOM_SEED)
 sample_ratio = 0.25
 
 # Fixed parameters
-model_type = 'gru'
+model_type = 'lstm'
 use_additional_input = True
 learning_rate = 0.01
 yearly = True
 discounted = True
-path = f'grid_search_{model_type}_gross_surplus/'
+path = f'grid_search_2500_{model_type}_gross_surplus/'
 
 print('PATH: ', path)
 
@@ -33,7 +33,7 @@ timesteps = [5,10,15,20]
 lstm_cells = [32, 64, 128]
 lstm_layers = [1]#, 3]
 use_dropout = [False]#,True]
-batch_size = [250, 500, 1000]
+batch_size = [100, 250, 500]
 rnn_activation = ['tanh']#,'relu', 'linear']
 output_activation = ['tanh','linear']
 additional_output_activation = ['tanh','linear']#, 'linear', 'sigmoid']

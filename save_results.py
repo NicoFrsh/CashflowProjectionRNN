@@ -11,6 +11,8 @@ from model import RNN_Model
 import data_postprocessing
 
 model_path = config.MODEL_PATH + '/model.h5'
+# path = 'models_60_10k/lstm_basis_ii'
+# model_path = path + '/model.h5'
 # Fixed parameters
 # model_type = 'lstm'
 # use_additional_input = False
@@ -72,10 +74,29 @@ y_train_original = scaler_output.inverse_transform(y_train)
 pred_val_original = scaler_output.inverse_transform(pred_val)
 y_val_original = scaler_output.inverse_transform(y_val)
 
+data_dict = {
+    "pred_train" : pred_train,
+    "y_train" : y_train,
+    "pred_train_original" : pred_train_original,
+    "y_train_original" : y_train_original,
+
+    "pred_val" : pred_val,
+    "y_val" : y_val,
+    "pred_val_original" : pred_val_original,
+    "y_val_original" : y_val_original,
+
+    "pred_test" : pred_test,
+    "y_test" : y_test,
+    "pred_test_original" : pred_test_original,
+    "y_test_original" : y_test_original,
+}
+
 # Save predictions array
 filename = config.MODEL_PATH + '/data.pickle'
 # filename = path + '/data.pickle'
+# filename = path + '/data.pickle'
 
 with open(filename, 'wb') as f:
-    pickle.dump(
-        [pred_test,y_test, pred_test_original, y_test_original, pred_val, y_val, pred_val_original, y_val_original], f)
+    pickle.dump(data_dict, f)
+    # pickle.dump(
+        # [pred_test,y_test, pred_test_original, y_test_original, pred_val, y_val, pred_val_original, y_val_original], f)
