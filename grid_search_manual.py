@@ -18,25 +18,25 @@ random.seed(config.RANDOM_SEED)
 sample_ratio = 0.25
 
 # Fixed parameters
-model_type = 'gru'
+model_type = 'lstm'
 use_additional_input = True
 learning_rate = 0.01
 yearly = True
 discounted = True
-path = f'grid_search_{model_type}_gross_surplus/'
+path = f'stability_basis_ii_3_decreasing_{model_type}/'
 
 print('PATH: ', path)
 
 # Define hyperparameter grid
 shuffle = [True]#, False]
-timesteps = [5,10,15,20]
-lstm_cells = [32, 64, 128]
-lstm_layers = [1]#, 3]
+timesteps = [5]#,10,15,20]
+lstm_cells = [32]#, 64, 128]
+lstm_layers = [3]#,2,3]
 use_dropout = [False]#,True]
-batch_size = [250, 500, 1000]
+batch_size = [500]#250, 1000]
 rnn_activation = ['tanh']#,'relu', 'linear']
-output_activation = ['tanh','linear']
-additional_output_activation = ['tanh','linear']#, 'linear', 'sigmoid']
+output_activation = ['tanh']#,'linear']
+additional_output_activation = ['tanh']#,'linear']#, 'linear', 'sigmoid']
 
 number_combinations = len(shuffle)*len(timesteps)*len(lstm_cells)*len(lstm_layers)*len(use_dropout)*len(batch_size)*len(rnn_activation)*len(output_activation)*len(additional_output_activation)
 print('total # of combinations: ', number_combinations)
@@ -47,18 +47,18 @@ print(f'sampling {number_sample} combinations.')
 
 results = []
 
-for i in range(number_sample):
+for i in range(10):
 
     # Set random seed to get reproducible combinations
     np.random.seed(config.RANDOM_SEED)
-    tf.random.set_seed(config.RANDOM_SEED)
+    # tf.random.set_seed(config.RANDOM_SEED)
 
     timesteps_i = random.choice(timesteps)
     lstm_cells_i = random.choice(lstm_cells)
     lstm_layers_i = random.choice(lstm_layers)
-    if lstm_layers_i > 1: # multilayer rnn need less cells
-        # lstm_cells_i = int(lstm_cells_i / 2)
-        lstm_cells_i = 16
+    # if lstm_layers_i > 1: # multilayer rnn need less cells
+    #     # lstm_cells_i = int(lstm_cells_i / 2)
+    #     lstm_cells_i = 16
     # use_dropout_i = random.choice(use_dropout)
     batch_size_i = random.choice(batch_size)
     rnn_activation_i = random.choice(rnn_activation)

@@ -103,7 +103,7 @@ def build_model(model_type, use_additional_input, learning_rate, input_shape, re
          
          elif model_type == 'lstm':
             current_output = LSTM(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
-            # current_output = LSTM(recurrent_cells, activation='linear', return_sequences=True, dropout=dropout)(current_output)
+            # current_output = LSTM(recurrent_cells, activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
 
          elif model_type == 'gru':
             current_output = GRU(int(recurrent_cells / (2**i)), activation=recurrent_activation, return_sequences=True, dropout=dropout)(current_output)
