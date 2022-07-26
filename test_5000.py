@@ -8,26 +8,13 @@ import config
 import data_preprocessing, data_postprocessing, model
 
 grid_search_path = './grid_search_lstm_gross_surplus/'
-# grid_search_path = './grid_search_2500_lstm_gross_surplus/'
 
 results = pd.read_excel(grid_search_path+'results_lstm_gru.xlsx')
 # results = pd.read_excel(grid_search_path+'results.xlsx')
 
-n_train = int(config.NUMBER_SCENARIOS * config.TRAIN_RATIO) * config.PROJECTION_TIME
-if config.TRAIN_2500:
-    n_val = int(n_train * config.VAL_RATIO)
-else:
-    n_val = int(config.NUMBER_SCENARIOS* ((1 - (config.TRAIN_RATIO))/2)) * config.PROJECTION_TIME
+number_models = 15
 
-n_test = int(config.NUMBER_SCENARIOS * config.PROJECTION_TIME - n_train - n_val)
-
-print('n_train: ', n_train)
-print('n_val: ', n_val)
-print('n_test: ', n_test)
-
-number_models = 5
-# predictions_train, predictions_val, predictions_test = np.zeros((540000,1)), np.zeros((30000,1)), np.zeros((30060, 1))
-predictions_train, predictions_val, predictions_test = np.zeros((n_train,1)), np.zeros((n_val,1)), np.zeros((n_test, 1))
+predictions_test = np.zeros((config.NUMBER_SCENARIOS * config.PROJECTION_TIME,1))
 
 start_time = time.time()
 
@@ -73,50 +60,34 @@ for i in range(number_models):
 
     rnn_model.summary()
     # Make predictions
-    # pred_train, _ = rnn_model.predict(X_train)
-    pred_train, _ = data_postprocessing.recursive_prediction(X_train, rnn_model, timesteps, batch_size)
-    # pred_val, _ = rnn_model.predict(X_val)
-    pred_val, _ = data_postprocessing.recursive_prediction(X_val, rnn_model, timesteps, batch_size)
     pred_test, _ = data_postprocessing.recursive_prediction(X_test, rnn_model, timesteps, batch_size)
 
-    print("pred_train shape: ", pred_train.shape)
-    print("pred_val shape: ", pred_val.shape)
     print("pred_test shape: ", pred_test.shape)
 
     # Sum up predictions
-    predictions_train += pred_train
-    predictions_val += pred_val
     predictions_test += pred_test
 
 
 # Divide by number of models in ensemble to get mean
-predictions_train = predictions_train / number_models
-predictions_val = predictions_val / number_models
 predictions_test = predictions_test / number_models
 
 print(f'Execution time: {time.time() - start_time} seconds')
 
 # Obtain original scaled data
-pred_train_original = scaler_output.inverse_transform(predictions_train)
-y_train_original = scaler_output.inverse_transform(y_train)
-
-pred_val_original = scaler_output.inverse_transform(predictions_val)
-y_val_original = scaler_output.inverse_transform(y_val)
-
 pred_test_original = scaler_output.inverse_transform(predictions_test)
 y_test_original = scaler_output.inverse_transform(y_test)
 
 
 data_dict = {
-    "pred_train" : predictions_train,
-    "y_train" : y_train,
-    "pred_train_original" : pred_train_original,
-    "y_train_original" : y_train_original,
+    "pred_train" : [],
+    "y_train" : [],
+    "pred_train_original" : [],
+    "y_train_original" : [],
 
-    "pred_val" : predictions_val,
-    "y_val" : y_val,
-    "pred_val_original" : pred_val_original,
-    "y_val_original" : y_val_original,
+    "pred_val" : [],
+    "y_val" : [],
+    "pred_val_original" : [],
+    "y_val_original" : [],
 
     "pred_test" : predictions_test,
     "y_test" : y_test,
@@ -127,6 +98,6 @@ data_dict = {
 # Save using pickle
 ensemble_path = grid_search_path + f'Ensemble_{number_models}'
 os.makedirs(ensemble_path, exist_ok=True)
-with open(ensemble_path + '/data_johannes.pickle' , 'wb') as f:
+with open(ensemble_path + '/pred_10k.pickle' , 'wb') as f:
     pickle.dump(data_dict, f)
     # pickle.dump([predictions_test, y_test, pred_test_original, y_test_original, predictions_val, y_val, pred_val_original, y_val_original], f)

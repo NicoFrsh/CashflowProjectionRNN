@@ -1,6 +1,6 @@
 __pycache__
 .DS_Store
-models*/
+models*/ 
 tensorflow-apple-metal.yml
 plots
 data/
@@ -8,3 +8,5 @@ models_10k
 models_60_10k
 *grid_search*/
 shuffle*/
+models*
+stability*

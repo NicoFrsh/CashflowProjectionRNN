@@ -221,7 +221,7 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
     the data as training data and the rest evenly distributed as validation and test data. E.g. train_ratio = 0.9:  
             0.9 : 0.05 : 0.05 - Split
     Here, it is crucial that the split point is not in the middle of a scenario but exactly between two scenarios.
-    """
+    """   
 
     total_scenarios = len(labels) / projection_time
 
@@ -235,6 +235,9 @@ def train_val_test_split(features, labels, additional_labels, train_ratio, proje
 
     idx_train_end = train_scenarios_end * projection_time
     idx_val_end = val_scenarios_end * projection_time
+
+    if train_ratio == 0.0:
+        idx_val_end = 0
 
     X_train = features[:idx_train_end,:,:]
     y_train = labels[:idx_train_end,:]

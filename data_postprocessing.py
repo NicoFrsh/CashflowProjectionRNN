@@ -69,7 +69,7 @@ def recursive_prediction(X_test, rnn_model, recurrent_timesteps, batch_size):
             # Replace additional input with predictions of additional input
             feature[:,-j,-1] = z[i-j::projection_time,0]
 
-        # TODO: Achtung! Pruefen ob das mit batch_size != 1 wirklich funktioniert!
+        # Make predictions
         y_i, z_i = rnn_model.predict(feature, batch_size = batch_size)
 
         y[i::projection_time] = y_i
@@ -112,6 +112,7 @@ def calculate_loss_per_timestep(targets, predictions, timesteps = config.PROJECT
     """
 
     loss = []
+    stds = []
 
     for i in range(timesteps):
 
@@ -130,13 +131,83 @@ def calculate_loss_per_timestep(targets, predictions, timesteps = config.PROJECT
             # Compute MAE at timestep i
             loss_i = (np.abs(targets_extract - predictions_extract)).mean()
 
+        elif loss_metric == 'adj-mae':
+            # Adjusted MAE = MAE(i) / std_targets(i)
+            loss_i = np.mean(np.abs(targets_extract - predictions_extract)) / np.std(targets_extract)
+            # Adj. MAE = MAE(i) / coefficent of variation 
+            # cv = np.std(targets_extract) / np.mean(targets_extract)
+            # loss_i = np.mean(np.abs(targets_extract - predictions_extract)) / cv
+            # Adj. MAE = MAE(i) / length of 95%-confidence interval
+            # import scipy.stats as st
+            # ci = st.norm.interval(0.95, loc=np.mean(targets_extract), scale=st.sem(targets_extract))
+            # ci = st.t.interval(0.95, len(targets_extract)-1, loc=np.mean(targets_extract), scale=st.sem(targets_extract))
+            # len_ci = abs(ci[0] - ci[1])[0]
+            # loss_i = np.mean(np.abs(targets_extract - predictions_extract)) / len_ci
+            # loss_i = np.mean(np.abs(targets_extract - predictions_extract)) / np.mean(targets_extract)
+
+        elif (loss_metric == 'mape'):
+            if i == 13:
+                print('min(targets) t = 13:')
+                print(np.min(np.abs(targets_extract)))
+
+            loss_i = np.mean(np.abs((targets_extract - predictions_extract) / targets_extract)) * 100
+
+        elif loss_metric == 'wmape':
+            # Weighted MAPE
+            # loss_i = np.mean(np.abs((targets_extract - predictions_extract) / targets_extract)) * 100
+            loss_i = np.sum(np.abs(targets_extract - predictions_extract)) / np.sum(targets_extract) * 100
+
+        elif (loss_metric == 'smape'):
+            loss_i = np.mean((np.abs(targets_extract - predictions_extract)) / ((np.abs(targets_extract) + np.abs(predictions_extract)))) * 100
+
+        elif (loss_metric == 'r-squared'):
+            from sklearn.metrics import r2_score
+            loss_i = r2_score(targets_extract, predictions_extract)
+
         loss.append(loss_i)
-            
+        # if i == timesteps - 30:
+        #     stds.append(targets_extract)
+        # stds.append(np.std(targets_extract))
+        # stds.append(len_ci)
+        stds.append(np.std(targets_extract))
+        # stds.append(cv)
+      
     # Check:
     # total_loss = np.mean(loss)
     # print('total_loss (per timestep): ', total_loss)
-    loss = np.array(loss)
-    return loss
+    return np.array(loss), np.array(stds)
+
+def count_zeros_per_timestep(targets, predictions, timesteps = config.PROJECTION_TIME):
+
+    zero_counter_targets, zero_counter_predictions = [],[]
+
+    for i in range(timesteps):
+
+        # Extract targets and predictions for each scenario at timestep i
+        targets_extract = targets[i::timesteps].copy()
+        predictions_extract = predictions[i::timesteps].copy()
+
+        zero_counter_targets_i = np.count_nonzero(np.abs(targets_extract) <= 1e-8)
+        zero_counter_predictions_i = np.count_nonzero(np.abs(predictions_extract) <= 1e-8)
+
+        zero_counter_targets.append(zero_counter_targets_i)
+        zero_counter_predictions.append(zero_counter_predictions_i)
+
+    return zero_counter_targets, zero_counter_predictions
+
+def calculate_sem(targets, timesteps = config.PROJECTION_TIME):
+    """
+    Calculates the standard error of the mean (= standard deviation of the means).
+    """
+    means = []
+    for i in range(timesteps):
+
+        # Extract targets and predictions for each scenario at timestep i
+        targets_extract = targets[i::timesteps].copy()
+        means.append(np.mean(targets_extract))
+
+    return np.std(means)
+
 
 def calculate_mean_per_scenario(outputs, timesteps):
     """
@@ -187,6 +258,25 @@ def calculate_loss_per_scenario(targets, predictions, timesteps = config.PROJECT
         elif (loss_metric == 'mae'):
             # Compute MAE of i-th scenario
             loss_i = (np.abs(targets_extract - predictions_extract)).mean()
+
+        elif loss_metric == 'adj-mae':
+            # Adjusted MAE = MAE(i) / std_targets(i)
+            loss_i = np.mean(np.abs(targets_extract - predictions_extract)) / np.std(targets_extract)
+
+        elif (loss_metric == 'mape'):
+            loss_i = np.mean(np.abs((targets_extract - predictions_extract) / targets_extract)) * 100
+
+        elif loss_metric == 'wmape':
+            # Weighted MAPE
+            # loss_i = np.mean(np.abs((targets_extract - predictions_extract) / targets_extract)) * 100
+            loss_i = np.sum(np.abs(targets_extract - predictions_extract)) / np.sum(targets_extract) * 100
+
+        elif (loss_metric == 'smape'):
+            loss_i = np.mean((np.abs(targets_extract - predictions_extract)) / ((np.abs(targets_extract) + np.abs(predictions_extract)) / 2)) * 100
+
+        elif (loss_metric == 'r-squared'):
+            from sklearn.metrics import r2_score
+            loss_i = r2_score(targets_extract, predictions_extract)
 
         loss.append(loss_i)
 

@@ -10,7 +10,7 @@ import data_preprocessing
 # Set plot font
 plt.rcParams['text.latex.preamble']=[r"\usepackage{lmodern}"]
 params = {'text.usetex' : True,
-            'font.size' : 18,
+            'font.size' : 20,
             'font.family' : 'lmodern'}
 plt.rcParams.update(params)
 
@@ -111,15 +111,21 @@ net_profits_df['value'] = discounted_np
 
 # Boxplot before discounting
 plt.figure(99)
-plt.boxplot(net_profits_array, whis=[5,95], sym='')
+plt.boxplot(discounted_np, whis=[5,95], sym='')
 plt.title("Boxplot Net Profits")
 
 # Compute Mean, Max, Min, Std etc
-net_profits_mean = np.mean(net_profits_array)
-net_profits_median = np.median(net_profits_array)
-net_profits_min = np.min(net_profits_array)
-net_profits_max = np.max(net_profits_array)
-net_profits_std = np.std(net_profits_array)
+# net_profits_mean = np.mean(net_profits_array)
+# net_profits_median = np.median(net_profits_array)
+# net_profits_min = np.min(net_profits_array)
+# net_profits_max = np.max(net_profits_array)
+# net_profits_std = np.std(net_profits_array)
+
+net_profits_mean = np.mean(discounted_np)
+net_profits_median = np.median(discounted_np)
+net_profits_min = np.min(discounted_np)
+net_profits_max = np.max(discounted_np)
+net_profits_std = np.std(discounted_np)
 
 print('Exploratory Analysis Net Profits:')
 print("Min: \t\t", net_profits_min / 10e6, " Mio.")
@@ -127,10 +133,13 @@ print("Max: \t\t", net_profits_max)
 print("Mean: \t\t", net_profits_mean)
 print("Median: \t\t", net_profits_median)
 print("Std: \t\t", net_profits_std)
-
+print("Zero count: \t\t", np.count_nonzero(discounted_np==0))
 # plt.figure(7)
-# sns.lineplot(data=net_profits_df,x='Zeit', y='value', ci=98)
+# sns.lineplot(data=net_profits_df,x='Zeit', y='value', ci=95)
 # plt.ylabel('Net Profit')
+# plt.xticks([0,10,20,30,40,50,60])
+# plt.xlabel('t')
+# plt.tight_layout()
 # plt.savefig('./plots/net_profit.pdf')
 
 # plt.figure(15)
@@ -138,19 +147,20 @@ print("Std: \t\t", net_profits_std)
 
 
 # Same with some inputs
-print(input.head(3))
-plt.figure(8)
-sns.lineplot(data=input, x='Zeit', y='Diskontfunktion', label='Diskontfunktion')
-sns.lineplot(data=input, x='Zeit', y='Aktien', label='Aktien')
-sns.lineplot(data=input, x='Zeit', y='Dividenden', label='Dividenden')
-sns.lineplot(data=input, x='Zeit', y='Immobilien', label='Immobilien')
-sns.lineplot(data=input, x='Zeit', y='Mieten', label='Mieten')
-# sns.lineplot(data=input, x='Zeit', y='10j Spotrate fuer ZZR', label='10j Spotrate')
-plt.ylabel('')
-plt.xlabel('t')
-plt.legend()
-plt.tight_layout()
-plt.savefig('./plots/szenarien.pdf')
+# print(input.head(3))
+# plt.figure(8)
+# sns.lineplot(data=input, x='Zeit', y='Diskontfunktion', label='Diskontfunktion')
+# sns.lineplot(data=input, x='Zeit', y='Aktien', label='Aktien')
+# sns.lineplot(data=input, x='Zeit', y='Dividenden', label='Dividenden')
+# sns.lineplot(data=input, x='Zeit', y='Immobilien', label='Immobilien')
+# sns.lineplot(data=input, x='Zeit', y='Mieten', label='Mieten')
+# # sns.lineplot(data=input, x='Zeit', y='10j Spotrate fuer ZZR', label='10j Spotrate')
+# plt.ylabel('')
+# plt.xlabel('t')
+# plt.xticks([0,10,20,30,40,50,60])
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig('./plots/szenarien.pdf')
 
 # plt.figure(10)
 # # sns.lineplot(data=input, x='Zeit', y='Diskontfunktion', label='Diskontfunktion')
@@ -162,21 +172,22 @@ plt.savefig('./plots/szenarien.pdf')
 # plt.ylabel('')
 # plt.legend()
 
-plt.figure(9, figsize=[8,4.8])
-sns.lineplot(data=input, x='Zeit', y='1', label='Spot 1')
-sns.lineplot(data=input, x='Zeit', y='3', label='Spot 3')
-sns.lineplot(data=input, x='Zeit', y='5', label='Spot 5')
-sns.lineplot(data=input, x='Zeit', y='10', label='Spot 10')
-sns.lineplot(data=input, x='Zeit', y='15', label='Spot 15')
-sns.lineplot(data=input, x='Zeit', y='20', label='Spot 20')
-sns.lineplot(data=input, x='Zeit', y='30', label='Spot 30')
-sns.lineplot(data=input, x='Zeit', y='10j Spotrate fuer ZZR', label='10j Spotrate')
-plt.xlabel('t')
-plt.ylabel('')
-# plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., prop={'size': 12})
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.tight_layout()
-plt.savefig('./plots/spot_rates.pdf')
+# plt.figure(9, figsize=[8,4.8])
+# sns.lineplot(data=input, x='Zeit', y='1', label='Spot 1')
+# sns.lineplot(data=input, x='Zeit', y='3', label='Spot 3')
+# sns.lineplot(data=input, x='Zeit', y='5', label='Spot 5')
+# sns.lineplot(data=input, x='Zeit', y='10', label='Spot 10')
+# sns.lineplot(data=input, x='Zeit', y='15', label='Spot 15')
+# sns.lineplot(data=input, x='Zeit', y='20', label='Spot 20')
+# sns.lineplot(data=input, x='Zeit', y='30', label='Spot 30')
+# sns.lineplot(data=input, x='Zeit', y='10j Spotrate fuer ZZR', label='10j Spotrate')
+# plt.xlabel('t')
+# plt.xticks([0,10,20,30,40,50,60])
+# plt.ylabel('')
+# # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., prop={'size': 12})
+# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+# plt.tight_layout()
+# plt.savefig('./plots/spot_rates.pdf')
 
 
 
