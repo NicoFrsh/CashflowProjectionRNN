@@ -9,3 +9,5 @@ models_60_10k
 *grid_search*/
 shuffle*/
 stability*
+exploratory_analysis.py
+pvfp_analysis.py
