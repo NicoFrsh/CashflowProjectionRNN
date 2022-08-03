@@ -1,13 +1,12 @@
-# Load predictions from pickle file
 import os
 from distutils.command.config import config
 import pickle
 import numpy as np
-from matplotlib import rc
 import matplotlib.pyplot as plt
-from sklearn import model_selection
 import config
 import data_postprocessing
+
+# This script loads a trained model and evaluates it plotting different accuracy plots and metrics.
 
 # Settings
 plot_val_data = False

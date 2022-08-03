@@ -7,6 +7,9 @@ import pandas as pd
 import config
 import data_preprocessing, data_postprocessing, model
 
+# This script creates a model ensemble consisting of the <number_models> 'best' models of a grid search
+# saved in a specific path
+
 grid_search_path = './grid_search_lstm_gross_surplus/'
 
 results = pd.read_excel(grid_search_path+'results_lstm_gru.xlsx')
