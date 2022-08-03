@@ -10,9 +10,9 @@ import model
 from model import RNN_Model
 import data_postprocessing
 
-# model_path = config.MODEL_PATH + '/model.h5'
-path = 'grid_search_lstm_gross_surplus/Ensemble_5'
-model_path = path + '/model.h5'
+model_path = config.MODEL_PATH + '/model.h5'
+# path = 'grid_search_lstm_gross_surplus/Ensemble_5'
+# model_path = path + '/model.h5'
 # Fixed parameters
 # model_type = 'lstm'
 # use_additional_input = False

@@ -24,9 +24,9 @@ params = {'text.usetex' : True,
 plt.rcParams.update(params)
 
 # Load predictions and targets
-# model_path = config.MODEL_PATH
+model_path = config.MODEL_PATH
 # model_path = 'models_60_10k/lstm_basis'
-model_path = 'grid_search_lstm_gross_surplus/Ensemble_5'
+# model_path = 'grid_search_lstm_gross_surplus/Ensemble_5'
 filepath = model_path + '/data.pickle'
 
 print('Evaluating model ', os.path.dirname(filepath))

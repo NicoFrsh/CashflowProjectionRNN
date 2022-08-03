@@ -1,9 +1,9 @@
 # Configuration parameters
-TRAIN_2500 = False
+TRAIN_2500 = True
 VAL_RATIO = 0.2
 
 RANDOM_SEED = 123
-SHUFFLE = True
+SHUFFLE = False
 
 PATH_SCENARIO = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/scenario_10k.csv'
 PATH_OUTPUT = r'/Users/nicofrisch/Dokumente/Python/CashflowProjectionRNN/data/output_10k.csv'
@@ -13,17 +13,17 @@ ADDITIONAL_INPUT = 'gross surplus'
 
 NUMBER_SCENARIOS = 10001
 PROJECTION_TIME = 60
-TIMESTEPS = 5
+TIMESTEPS = 15
 
 MODEL_TYPE = 'lstm'
 LEARNING_RATE = 0.01
 
-LSTM_CELLS = 32
+LSTM_CELLS = 64
 LSTM_LAYERS = 1
 BATCH_SIZE = 500
 DROPOUT_RATE = 0.0
 # Note: All activations other than 'tanh' are slower, as CuDNN is only implemented for 'tanh'.
-RNN_ACTIVATION = 'linear'
+RNN_ACTIVATION = 'tanh'
 # TODO: lineare Aktivierung ausprobieren!
 OUTPUT_ACTIVATION = 'tanh'
 # sigmoid am besten, da die Inputs alle positiv sind und dann die Skalierung auf (0,1) optimal ist.
@@ -31,7 +31,7 @@ ADDITIONAL_OUTPUT_ACTIVATION = 'tanh'
 
 TRAIN_RATIO = 0.9
 if TRAIN_2500:
-    TRAIN_RATIO = 0.25
+    TRAIN_RATIO = 0.2
 EPOCHS = 500
 
 ## Parameters for comparison of different versions
@@ -43,7 +43,7 @@ use_yearly_inputs = True
 use_discounted_np = True
 
 # Descriptive name for directory where the model is saved
-MODEL_PATH = 'models_60_10k/{}_'.format(MODEL_TYPE)
+MODEL_PATH = 'models_2400/{}_'.format(MODEL_TYPE)
 if SHUFFLE:
     MODEL_PATH += 'shuffle_'
 if USE_ADDITIONAL_INPUT:
